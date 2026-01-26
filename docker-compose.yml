@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: roms-postgres
+    environment:
+      POSTGRES_DB: roms_db
+      POSTGRES_USER: roms_user
+      POSTGRES_PASSWORD: roms_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    networks:
+      - roms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roms_user -d roms_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (Optional - for database management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: roms-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@roms.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - roms-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  roms-network:
+    driver: bridge

@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: ROMS
+  
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/roms_db
+    username: roms_user
+    password: roms_password
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        envers:
+          audit_table_suffix: _AUD
+          revision_field_name: REV
+          revision_type_field_name: REVTYPE
+          
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-minimum-32-characters}
+  expiration: 86400000 # 24 hours in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+# Google Drive Configuration
+google:
+  drive:
+    application-name: ROMS-Document-Management
+    credentials-file-path: ${GOOGLE_CREDENTIALS_PATH:credentials.json}
+    folder-id: ${GOOGLE_DRIVE_FOLDER_ID:} # Root folder ID for documents
+    shared-link-duration: 300 # 5 minutes in seconds
+
+# Application Settings
+roms:
+  passport:
+    min-validity-months: 6
+  document:
+    allowed-types: PDF,JPEG,JPG,PNG
+    max-size-mb: 5
+
+# Logging
+logging:
+  level:
+    com.roms: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

@@ -1,0 +1,277 @@
+20:[ERROR] COMPILATION ERROR : 
+22:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[8,27] cannot access com.roms.repository.UserRepository
+26:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[10,8] duplicate class: com.example.Roms.repository.UserRepository
+27:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[29,13] cannot find symbol
+30:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[21,13] cannot find symbol
+33:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[3,31] package com.example.Roms.entity does not exist
+34:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[10,55] cannot find symbol
+36:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[12,14] cannot find symbol
+39:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[14,14] cannot find symbol
+42:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/entity/Payment.java:[90,23] cannot find symbol
+45:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[18,27] cannot find symbol
+48:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[25,27] cannot find symbol
+51:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[33,27] cannot find symbol
+54:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[41,37] cannot find symbol
+57:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[42,37] cannot find symbol
+60:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[51,63] cannot find symbol
+63:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[54,45] cannot find symbol
+66:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[57,31] cannot find symbol
+69:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[58,27] cannot find symbol
+72:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[67,60] cannot find symbol
+75:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[73,57] cannot find symbol
+78:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[79,25] cannot find symbol
+81:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[80,42] cannot find symbol
+84:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[81,39] cannot find symbol
+87:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[82,65] cannot find symbol
+90:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[83,42] cannot find symbol
+93:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[84,45] cannot find symbol
+96:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[85,38] cannot find symbol
+99:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[59,9] cannot find symbol
+102:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[75,13] cannot find symbol
+105:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[77,13] cannot find symbol
+108:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[89,9] cannot find symbol
+111:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[122,13] cannot find symbol
+114:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[139,9] cannot find symbol
+117:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[148,9] cannot find symbol
+120:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[150,9] cannot find symbol
+123:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[160,9] cannot find symbol
+126:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[177,9] cannot find symbol
+129:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[29,18] cannot find symbol
+132:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[33,17] cannot find symbol
+135:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[43,22] cannot find symbol
+138:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[38,21] cannot find symbol
+141:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[39,21] cannot find symbol
+144:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[40,21] cannot find symbol
+147:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[49,83] cannot find symbol
+150:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/exception/GlobalExceptionHandler.java:[46,34] cannot find symbol
+153:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[46,79] cannot find symbol
+156:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[51,18] cannot find symbol
+159:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[64,48] cannot find symbol
+162:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[65,49] cannot find symbol
+165:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[66,47] cannot find symbol
+168:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[67,44] cannot find symbol
+171:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[68,50] cannot find symbol
+174:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[69,46] cannot find symbol
+177:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[47,50] cannot find symbol
+180:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[56,18] cannot find symbol
+183:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[127,26] cannot find symbol
+186:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[132,30] cannot find symbol
+189:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[141,30] cannot find symbol
+192:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[142,30] cannot find symbol
+195:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[157,22] cannot find symbol
+198:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[161,22] cannot find symbol
+201:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[170,51] cannot find symbol
+204:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[181,38] cannot find symbol
+207:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[190,29] cannot find symbol
+210:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[191,29] cannot find symbol
+213:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[192,29] cannot find symbol
+216:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[205,52] cannot find symbol
+219:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[221,52] cannot find symbol
+230:[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project Roms: Compilation failure: Compilation failure: 
+231:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[8,27] cannot access com.roms.repository.UserRepository
+232:[ERROR]   bad source file: C:\Programing\Realtime projects\ROMS\Roms\Roms\src\main\java\com\roms\repository\UserRepository.java
+233:[ERROR]     file does not contain class com.roms.repository.UserRepository
+234:[ERROR]     Please remove or make sure it appears in the correct subdirectory of the sourcepath.
+235:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[10,8] duplicate class: com.example.Roms.repository.UserRepository
+236:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[29,13] cannot find symbol
+237:[ERROR]   symbol:   class UserRepository
+238:[ERROR]   location: class com.roms.controller.AuthController
+239:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[21,13] cannot find symbol
+240:[ERROR]   symbol:   class UserRepository
+241:[ERROR]   location: class com.roms.security.CustomUserDetailsService
+242:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[3,31] package com.example.Roms.entity does not exist
+243:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[10,55] cannot find symbol
+244:[ERROR]   symbol: class User
+245:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[12,14] cannot find symbol
+246:[ERROR]   symbol:   class User
+247:[ERROR]   location: interface com.example.Roms.repository.UserRepository
+248:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/repository/UserRepository.java:[14,14] cannot find symbol
+249:[ERROR]   symbol:   class User
+250:[ERROR]   location: interface com.example.Roms.repository.UserRepository
+251:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/entity/Payment.java:[90,23] cannot find symbol
+252:[ERROR]   symbol:   method builder()
+253:[ERROR]   location: class com.roms.entity.Payment
+254:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[18,27] cannot find symbol
+255:[ERROR]   symbol:   method builder()
+256:[ERROR]   location: class com.roms.dto.ApiResponse
+257:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[25,27] cannot find symbol
+258:[ERROR]   symbol:   method builder()
+259:[ERROR]   location: class com.roms.dto.ApiResponse
+260:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/dto/ApiResponse.java:[33,27] cannot find symbol
+261:[ERROR]   symbol:   method builder()
+262:[ERROR]   location: class com.roms.dto.ApiResponse
+263:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[41,37] cannot find symbol
+264:[ERROR]   symbol:   method getUsername()
+265:[ERROR]   location: variable loginRequest of type com.roms.dto.LoginRequest
+266:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[42,37] cannot find symbol
+267:[ERROR]   symbol:   method getPassword()
+268:[ERROR]   location: variable loginRequest of type com.roms.dto.LoginRequest
+269:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[51,63] cannot find symbol
+270:[ERROR]   symbol:   method getUsername()
+271:[ERROR]   location: variable loginRequest of type com.roms.dto.LoginRequest
+272:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[54,45] cannot find symbol
+273:[ERROR]   symbol:   method builder()
+274:[ERROR]   location: class com.roms.dto.AuthResponse
+275:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[57,31] cannot find symbol
+276:[ERROR]   symbol:   method getUsername()
+277:[ERROR]   location: variable user of type com.roms.entity.User
+278:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[58,27] cannot find symbol
+279:[ERROR]   symbol:   method getRole()
+280:[ERROR]   location: variable user of type com.roms.entity.User
+281:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[67,60] cannot find symbol
+282:[ERROR]   symbol:   method getUsername()
+283:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+284:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[73,57] cannot find symbol
+285:[ERROR]   symbol:   method getEmail()
+286:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+287:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[79,25] cannot find symbol
+288:[ERROR]   symbol:   method builder()
+289:[ERROR]   location: class com.roms.entity.User
+290:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[80,42] cannot find symbol
+291:[ERROR]   symbol:   method getUsername()
+292:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+293:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[81,39] cannot find symbol
+294:[ERROR]   symbol:   method getEmail()
+295:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+296:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[82,65] cannot find symbol
+297:[ERROR]   symbol:   method getPassword()
+298:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+299:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[83,42] cannot find symbol
+300:[ERROR]   symbol:   method getFullName()
+301:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+302:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[84,45] cannot find symbol
+303:[ERROR]   symbol:   method getPhoneNumber()
+304:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+305:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/AuthController.java:[85,38] cannot find symbol
+306:[ERROR]   symbol:   method getRole()
+307:[ERROR]   location: variable registerRequest of type com.roms.dto.RegisterRequest
+308:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[59,9] cannot find symbol
+309:[ERROR]   symbol:   variable log
+310:[ERROR]   location: class com.roms.service.GoogleDriveService
+311:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[75,13] cannot find symbol
+312:[ERROR]   symbol:   variable log
+313:[ERROR]   location: class com.roms.service.GoogleDriveService
+314:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[77,13] cannot find symbol
+315:[ERROR]   symbol:   variable log
+316:[ERROR]   location: class com.roms.service.GoogleDriveService
+317:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[89,9] cannot find symbol
+318:[ERROR]   symbol:   variable log
+319:[ERROR]   location: class com.roms.service.GoogleDriveService
+320:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[122,13] cannot find symbol
+321:[ERROR]   symbol:   variable log
+322:[ERROR]   location: class com.roms.service.GoogleDriveService
+323:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[139,9] cannot find symbol
+324:[ERROR]   symbol:   variable log
+325:[ERROR]   location: class com.roms.service.GoogleDriveService
+326:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[148,9] cannot find symbol
+327:[ERROR]   symbol:   variable log
+328:[ERROR]   location: class com.roms.service.GoogleDriveService
+329:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[150,9] cannot find symbol
+330:[ERROR]   symbol:   variable log
+331:[ERROR]   location: class com.roms.service.GoogleDriveService
+332:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[160,9] cannot find symbol
+333:[ERROR]   symbol:   variable log
+334:[ERROR]   location: class com.roms.service.GoogleDriveService
+335:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/GoogleDriveService.java:[177,9] cannot find symbol
+336:[ERROR]   symbol:   variable log
+337:[ERROR]   location: class com.roms.service.GoogleDriveService
+338:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[29,18] cannot find symbol
+339:[ERROR]   symbol:   method getIsActive()
+340:[ERROR]   location: variable user of type com.roms.entity.User
+341:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[33,17] cannot find symbol
+342:[ERROR]   symbol:   method getIsLocked()
+343:[ERROR]   location: variable user of type com.roms.entity.User
+344:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[43,22] cannot find symbol
+345:[ERROR]   symbol:   method getIsLocked()
+346:[ERROR]   location: variable user of type com.roms.entity.User
+347:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[38,21] cannot find symbol
+348:[ERROR]   symbol:   method getUsername()
+349:[ERROR]   location: variable user of type com.roms.entity.User
+350:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[39,21] cannot find symbol
+351:[ERROR]   symbol:   method getPassword()
+352:[ERROR]   location: variable user of type com.roms.entity.User
+353:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[40,21] cannot find symbol
+354:[ERROR]   symbol:   method getIsActive()
+355:[ERROR]   location: variable user of type com.roms.entity.User
+356:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/security/CustomUserDetailsService.java:[49,83] cannot find symbol
+357:[ERROR]   symbol:   method getRole()
+358:[ERROR]   location: variable user of type com.roms.entity.User
+359:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/exception/GlobalExceptionHandler.java:[46,34] cannot find symbol
+360:[ERROR]   symbol:   method builder()
+361:[ERROR]   location: class com.roms.dto.ApiResponse
+362:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[46,79] cannot find symbol
+363:[ERROR]   symbol:   method getPassportNo()
+364:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+365:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[51,18] cannot find symbol
+366:[ERROR]   symbol:   method setCurrentStatus(com.roms.enums.CandidateStatus)
+367:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+368:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[64,48] cannot find symbol
+369:[ERROR]   symbol:   method getFirstName()
+370:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+371:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[65,49] cannot find symbol
+372:[ERROR]   symbol:   method getMiddleName()
+373:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+374:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[66,47] cannot find symbol
+375:[ERROR]   symbol:   method getLastName()
+376:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+377:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[67,44] cannot find symbol
+378:[ERROR]   symbol:   method getEmail()
+379:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+380:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[68,50] cannot find symbol
+381:[ERROR]   symbol:   method getPhoneNumber()
+382:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+383:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/controller/CandidateController.java:[69,46] cannot find symbol
+384:[ERROR]   symbol:   method getAddress()
+385:[ERROR]   location: variable candidateDetails of type com.roms.entity.Candidate
+386:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[47,50] cannot find symbol
+387:[ERROR]   symbol:   method getCurrentStatus()
+388:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+389:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[56,18] cannot find symbol
+390:[ERROR]   symbol:   method setCurrentStatus(com.roms.enums.CandidateStatus)
+391:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+392:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[127,26] cannot find symbol
+393:[ERROR]   symbol:   method setMedicalStatus(com.roms.enums.MedicalStatus)
+394:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+395:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[132,30] cannot find symbol
+396:[ERROR]   symbol:   method getMedicalStatus()
+397:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+398:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[141,30] cannot find symbol
+399:[ERROR]   symbol:   method getJobOrder()
+400:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+401:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[142,30] cannot find symbol
+402:[ERROR]   symbol:   method getJobOrder()
+403:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+404:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[157,22] cannot find symbol
+405:[ERROR]   symbol:   method getPassportExpiry()
+406:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+407:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[161,22] cannot find symbol
+408:[ERROR]   symbol:   method getPassportExpiry()
+409:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+410:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[170,51] cannot find symbol
+411:[ERROR]   symbol:   method getId()
+412:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+413:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[181,38] cannot find symbol
+414:[ERROR]   symbol:   method getJobOrder()
+415:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+416:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[190,29] cannot find symbol
+417:[ERROR]   symbol:   method getJobOrderRef()
+418:[ERROR]   location: variable jobOrder of type com.roms.entity.JobOrder
+419:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[191,29] cannot find symbol
+420:[ERROR]   symbol:   method getHeadcountFilled()
+421:[ERROR]   location: variable jobOrder of type com.roms.entity.JobOrder
+422:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[192,29] cannot find symbol
+423:[ERROR]   symbol:   method getHeadcountRequired()
+424:[ERROR]   location: variable jobOrder of type com.roms.entity.JobOrder
+425:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[205,52] cannot find symbol
+426:[ERROR]   symbol:   method getCurrentStatus()
+427:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+428:[ERROR] /C:/Programing/Realtime projects/ROMS/Roms/Roms/src/main/java/com/roms/service/CandidateWorkflowService.java:[221,52] cannot find symbol
+429:[ERROR]   symbol:   method getCurrentStatus()
+430:[ERROR]   location: variable candidate of type com.roms.entity.Candidate
+431:[ERROR] -> [Help 1]
+432:[ERROR] 
+433:[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+434:[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+435:[ERROR] 
+436:[ERROR] For more information about the errors and possible solutions, please read the following articles:
+437:[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
