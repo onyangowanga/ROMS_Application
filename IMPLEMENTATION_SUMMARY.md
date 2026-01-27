@@ -34,7 +34,7 @@ Congratulations! Phase 1 of the ROMS (Recruitment Operations Management System) 
 2. **Candidate** - Candidate profiles with workflow
 3. **JobOrder** - Employment opportunities
 4. **Employer** - Hiring companies
-5. **CandidateDocument** - Document vault
+5. **CandidateDocument** - Document metadata vault (storage provider-agnostic)
 6. **Payment** - Financial ledger (immutable)
 
 #### Base Infrastructure
@@ -239,7 +239,7 @@ All entities auto-created with:
 | Audit Trail | ✅ | Hibernate Envers |
 | Soft Delete | ✅ | Partial index pattern |
 | Financial Immutability | ✅ | Reversal pattern |
-| Document Vault | ✅ | S3 ready |
+| Document Vault | ✅ | Google Drive (Phase 1), S3-abstracted (Phase 2) |
 
 ---
 

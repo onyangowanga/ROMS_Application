@@ -96,6 +96,12 @@ public class Candidate extends BaseAuditEntity {
     @Column(name = "medical_test_date")
     private LocalDate medicalTestDate;
 
+    @Column(name = "medical_expiry")
+    private LocalDate medicalExpiry;
+
+    @Column(name = "expiry_flag", length = 20)
+    private String expiryFlag; // EXPIRING_SOON, EXPIRED, VALID
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_order_id")
     private JobOrder jobOrder;

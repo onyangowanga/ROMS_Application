@@ -17,6 +17,17 @@ public class AuthResponse {
     @Builder.Default
     private String tokenType = "Bearer";
 
-    private String username;
-    private String role;
+    private UserDTO user;
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserDTO {
+        private Long id;
+        private String username;
+        private String email;
+        private String fullName;
+        private String role;
+    }
 }

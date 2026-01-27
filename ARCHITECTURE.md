@@ -95,9 +95,20 @@
 └──────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    EXTERNAL SERVICES (Phase 2/3)                     │
+│                    EXTERNAL SERVICES                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │    AWS S3    │  │  Email/SMS   │  │    M-Pesa    │              │
+│  │ Google Drive │  │  Email/SMS   │  │    M-Pesa    │              │
+│  │ API (Phase 1)│  │  Service     │  │    Gateway   │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+│  ┌──────────────┐  ┌──────────────┐                                │
+│  │   AWS S3     │  │  DocuSign/   │     Phase 2+                   │
+│  │ (Phase 2+)   │  │  Adobe Sign  │                                │
+│  └──────────────┘  └──────────────┘                                │
+│                                                                      │
+│  DocumentStorageService (Provider-Agnostic Abstraction)             │
+│  ├─ GoogleDriveStorageImpl (✅ Phase 1)                             │
+│  ├─ S3StorageImpl (⏳ Phase 2)                                      │
+│  └─ GCSStorageImpl (⏳ Phase 3)                                     │
 │  │  (Documents) │  │ Notification │  │     API      │              │
 │  └──────────────┘  └──────────────┘  └──────────────┘              │
 └──────────────────────────────────────────────────────────────────────┘

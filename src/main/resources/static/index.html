@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROMS - Recruitment Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .candidate-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .candidate-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .candidate-card p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-medical_pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏢 ROMS</h1>
+            <div class="user-info">
+                <span id="welcomeText" class="hidden"></span>
+                <button id="logoutBtn" class="btn btn-danger hidden">Logout</button>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Login/Register Section -->
+        <div id="authSection">
+            <div class="grid">
+                <!-- Login Card -->
+                <div class="card">
+                    <h2>Login</h2>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="loginUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+
+                <!-- Register Card -->
+                <div class="card">
+                    <h2>Register</h2>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="regUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="regEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="regFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="regPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="regRole" required>
+                                <option value="SUPER_ADMIN">Super Admin</option>
+                                <option value="OPERATIONS_STAFF">Operations Staff</option>
+                                <option value="FINANCE_MANAGER">Finance Manager</option>
+                                <option value="EMPLOYER">Employer</option>
+                                <option value="APPLICANT">Applicant</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application Section -->
+        <div id="appSection" class="hidden">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('candidates')">Candidates</button>
+                <button class="tab" onclick="showTab('create')">Add Candidate</button>
+            </div>
+
+            <!-- Candidates List Tab -->
+            <div id="candidatesTab" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Candidates</h2>
+                    <button class="btn btn-primary" onclick="loadCandidates()">🔄 Refresh</button>
+                </div>
+                <div id="candidatesList" class="loading">
+                    Loading candidates...
+                </div>
+            </div>
+
+            <!-- Create Candidate Tab -->
+            <div id="createTab" class="card hidden">
+                <h2>Add New Candidate</h2>
+                <form id="candidateForm">
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone *</label>
+                            <input type="tel" id="phone" required>
+                        </div>
+                    </div>
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label>Passport Number *</label>
+                            <input type="text" id="passportNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nationality *</label>
+                            <input type="text" id="nationality" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Position *</label>
+                        <input type="text" id="position" placeholder="e.g., Software Engineer" required>
+                    </div>
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="dateOfBirth">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input type="text" id="address">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Create Candidate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let token = localStorage.getItem('token');
+        let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token && currentUser) {
+                showApp();
+                loadCandidates();
+            } else {
+                showAuth();
+            }
+        });
+
+        // Authentication
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    token = data.token;
+                    currentUser = { username: data.username, role: data.role };
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    showAlert('Login successful!', 'success');
+                    showApp();
+                    loadCandidates();
+                } else {
+                    showAlert(data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Is the backend running?', 'error');
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userData = {
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                fullName: document.getElementById('regFullName').value,
+                password: document.getElementById('regPassword').value,
+                role: document.getElementById('regRole').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Registration successful! Please login.', 'success');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showAlert(data.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Is the backend running?', 'error');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            token = null;
+            currentUser = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showAuth();
+            showAlert('Logged out successfully', 'success');
+        });
+
+        // Candidate Operations
+        document.getElementById('candidateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const candidateData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phoneNumber: document.getElementById('phone').value,
+                passportNo: document.getElementById('passportNumber').value,
+                nationality: document.getElementById('nationality').value,
+                expectedPosition: document.getElementById('position').value,
+                dateOfBirth: document.getElementById('dateOfBirth').value || null,
+                currentAddress: document.getElementById('address').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/candidates`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(candidateData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Candidate created successfully!', 'success');
+                    document.getElementById('candidateForm').reset();
+                    showTab('candidates');
+                    loadCandidates();
+                } else {
+                    showAlert(data.message || 'Failed to create candidate', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadCandidates() {
+            const container = document.getElementById('candidatesList');
+            container.innerHTML = '<div class="loading">Loading candidates...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/candidates`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const candidates = result.data || [];
+                    
+                    if (candidates.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #999;">No candidates found. Add your first candidate!</p>';
+                        return;
+                    }
+
+                    container.innerHTML = '<div class="grid">' + candidates.map(candidate => `
+                        <div class="candidate-card">
+                            <h3>${candidate.firstName} ${candidate.lastName}</h3>
+                            <p>📧 ${candidate.email || 'N/A'}</p>
+                            <p>📱 ${candidate.phoneNumber || candidate.phone || 'N/A'}</p>
+                            <p>🛂 ${candidate.passportNo || candidate.passportNumber || 'N/A'}</p>
+                            <p>🌍 ${candidate.nationality || 'N/A'}</p>
+                            <p>💼 ${candidate.expectedPosition || candidate.position || 'N/A'}</p>
+                            <span class="status-badge status-${(candidate.currentStatus || candidate.status || 'applied').toLowerCase()}">${candidate.currentStatus || candidate.status || 'APPLIED'}</span>
+                        </div>
+                    `).join('') + '</div>';
+                } else {
+                    container.innerHTML = '<p style="color: red;">Failed to load candidates</p>';
+                }
+            } catch (error) {
+                container.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // UI Helper Functions
+        function showAuth() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('appSection').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('welcomeText').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('welcomeText').classList.remove('hidden');
+            document.getElementById('welcomeText').textContent = `Welcome, ${currentUser.username} (${currentUser.role})`;
+        }
+
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('candidatesTab').classList.add('hidden');
+            document.getElementById('createTab').classList.add('hidden');
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

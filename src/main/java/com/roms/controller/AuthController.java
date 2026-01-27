@@ -54,8 +54,13 @@ public class AuthController {
         AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .role(user.getRole().name())
+                .user(AuthResponse.UserDTO.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .role(user.getRole().name())
+                        .build())
                 .build();
 
         return ResponseEntity.ok(response);

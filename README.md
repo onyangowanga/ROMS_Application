@@ -30,15 +30,34 @@ Enterprise-grade Recruitment Operations Management System built with Java 17, Sp
 ✅ **Domain Entities**
 - User, Candidate, JobOrder, Payment, CandidateDocument, Employer
 - Financial immutability pattern (Payment ledger)
-- Document vault ready (S3 integration)
+- Document storage abstraction (Google Drive Phase 1, S3/GCS Phase 2+)
+
+✅ **Document Management API** (Phase 1.5)
+- Secure file upload/download with multipart support
+- Backend file streaming (no direct cloud URLs exposed)
+- Role-based document access control
+- DocumentType validation (PASSPORT, MEDICAL, OFFER, etc.)
+
+✅ **Expiry Intelligence** (Phase 1.5)
+- Automated passport and medical expiry monitoring
+- Scheduled job runs daily at 2:00 AM
+- 90-day advance warning system (EXPIRING_SOON flag)
+- Proactive alerts for expired documents (EXPIRED flag)
+
+✅ **Offer Letter Domain** (Phase 1.5)
+- Complete offer lifecycle: DRAFT → ISSUED → SIGNED
+- Medical clearance guard (cannot issue without PASSED status)
+- Interview optional (workflow flexibility)
+- APPLICANT-only signing (legal validity)
+- No concurrent offers to same candidate
 
 ## Tech Stack
-- **Backend**: Java 17, Spring Boot 4.0.2
+- **Backend**: Java 17, Spring Boot 3.2.2
 - **Security**: Spring Security + JWT
 - **Database**: PostgreSQL 15+
-- **ORM**: Hibernate + Envers
-- **Build Tool**: Maven
-- **Object Storage**: Google Drive API (Free Tier)
+- **ORM**: Hibernate 6.4.1 + Envers
+- **Build Tool**: Maven 3.9+
+- **Document Storage**: Google Drive API v3 (Phase 1), S3-compatible abstraction (Phase 2)
 
 ## Project Structure
 ```
@@ -259,15 +278,76 @@ APPLIED → DOCS_SUBMITTED → INTERVIEWED → MEDICAL_PASSED → OFFER_ISSUED �
 - [ ] Payment service with reversal logic
 - [ ] Employer management
 - [ ] Job order fulfillment tracking
-- [ ] Offer letter generation (PDF)
 - [ ] Financial reporting
+- [ ] PDF offer letter generation with template engine
+- [ ] Email/SMS notifications for offer issuance
 
 ### Phase 3: Automation (Weeks 11-14)
 - [ ] M-Pesa API integration
-- [ ] Email/SMS notifications
-- [ ] Document upload to S3
-- [ ] Presigned URL generation
+- [ ] S3/GCS abstraction layer (multi-cloud document storage)
+- [ ] Presigned URL generation for secure downloads
 - [ ] Google Sheets/Docs export
+- [ ] DocuSign/Adobe Sign integration for digital signatures
+- [ ] Dashboard analytics and reporting
+
+## API Surface (Complete Reference)
+
+### Authentication Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | ❌ | Register new user |
+| POST | `/api/auth/login` | ❌ | Authenticate user |
+| POST | `/api/auth/refresh` | ❌ | Refresh access token |
+
+### Candidate Management
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| GET | `/api/candidates` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, FINANCE_MANAGER | List all candidates (paginated) |
+| POST | `/api/candidates` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | Create new candidate |
+| GET | `/api/candidates/{id}` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, FINANCE_MANAGER | Get candidate by ID |
+| PUT | `/api/candidates/{id}` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | Update candidate |
+| DELETE | `/api/candidates/{id}` | ✅ | SUPER_ADMIN | Soft delete candidate |
+| GET | `/api/candidates/search` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | Search candidates |
+
+### Workflow Transitions
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| POST | `/api/candidates/{id}/shortlist` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | APPLIED → SHORTLISTED |
+| POST | `/api/candidates/{id}/schedule-interview` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | SHORTLISTED → INTERVIEW_SCHEDULED |
+| POST | `/api/candidates/{id}/select` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | INTERVIEW_SCHEDULED → SELECTED |
+| POST | `/api/candidates/{id}/process-medical` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | SELECTED → MEDICAL_IN_PROGRESS |
+| POST | `/api/candidates/{id}/mark-medical-fit` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | MEDICAL_IN_PROGRESS → MEDICAL_CLEARED |
+| POST | `/api/candidates/{id}/deploy` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | MEDICAL_CLEARED → DEPLOYED |
+| POST | `/api/candidates/{id}/place` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | DEPLOYED → PLACED |
+
+### Document Management (Provider-Agnostic: Google Drive/S3/GCS)
+| Method | Endpoint | Auth | Role | Status | Description |
+|--------|----------|------|------|--------|-------------|
+| POST | `/api/candidates/{id}/documents` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Upload document (multipart/form-data) |
+| GET | `/api/candidates/{id}/documents` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, APPLICANT | ✅ | List candidate documents |
+| GET | `/api/documents/{documentId}/download` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, APPLICANT | ✅ | Stream document (backend proxy, no direct URLs) |
+| DELETE | `/api/documents/{documentId}` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Soft delete document from storage |
+| GET | `/api/documents/{documentId}/share` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Generate backend download link |
+
+### Offer Letter Management (Phase 1.5 - COMPLETE)
+| Method | Endpoint | Auth | Role | Status | Description |
+|--------|----------|------|------|--------|-------------|
+| POST | `/api/offers/draft` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Create draft offer letter |
+| POST | `/api/offers/{id}/issue` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Issue offer (REQUIRES medical clearance) |
+| POST | `/api/offers/{id}/sign` | ✅ | APPLICANT | ✅ | Sign offer letter (own offers only) |
+| POST | `/api/offers/{id}/withdraw` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Withdraw offer with reason |
+| GET | `/api/offers/candidate/{id}` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, APPLICANT | ✅ | Get all candidate offers |
+| GET | `/api/offers/job-order/{id}` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF, EMPLOYER | ✅ | Get all job order offers |
+| GET | `/api/offers/candidate/{id}/can-receive` | ✅ | SUPER_ADMIN, OPERATIONS_STAFF | ✅ | Check if candidate can receive new offer |
+
+### Payment Management (Phase 2)
+| Method | Endpoint | Auth | Role | Status | Description |
+|--------|----------|------|------|--------|-------------|
+| POST | `/api/payments` | ✅ | SUPER_ADMIN, FINANCE_MANAGER | ⏳ | Record payment |
+| GET | `/api/payments/candidate/{id}` | ✅ | SUPER_ADMIN, FINANCE_MANAGER | ⏳ | Get candidate payment history |
+| GET | `/api/payments/balance/{id}` | ✅ | SUPER_ADMIN, FINANCE_MANAGER | ⏳ | Get candidate balance |
+
+**Legend:** ✅ Implemented | 🔄 Backend Ready (Frontend Pending) | ⏳ Planned
 
 ## Testing
 ```bash
@@ -292,4 +372,11 @@ This is an enterprise project. Follow the blueprint specifications strictly.
 Proprietary - All rights reserved
 
 ---
-**ROMS Version 1.1** - Phase 1 Complete ✅
+**ROMS Version 1.5** - Phase 1 + Phase 1.5 Complete ✅
+
+**Phase 1.5 Deliverables:**
+- ✅ Document Management API (secure upload/download)
+- ✅ Expiry Intelligence (automated monitoring)
+- ✅ Offer Letter Domain (complete lifecycle with business rules)
+
+See [PHASE_1_5_IMPLEMENTATION.md](PHASE_1_5_IMPLEMENTATION.md) for detailed implementation notes.
