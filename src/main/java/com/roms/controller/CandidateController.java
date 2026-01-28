@@ -1,10 +1,13 @@
 package com.roms.controller;
 
 import com.roms.dto.ApiResponse;
+import com.roms.dto.JobApplicationRequest;
 import com.roms.entity.Candidate;
 import com.roms.enums.CandidateStatus;
 import com.roms.repository.CandidateRepository;
 import com.roms.service.CandidateWorkflowService;
+import com.roms.service.JobApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,25 @@ public class CandidateController {
 
     @Autowired
     private CandidateWorkflowService workflowService;
+
+    @Autowired
+    private JobApplicationService jobApplicationService;
+
+    /**
+     * Public endpoint for job applications
+     * Creates both user account and candidate record in one transaction
+     */
+    @PostMapping("/apply")
+    public ResponseEntity<?> applyForJob(@Valid @RequestBody JobApplicationRequest request) {
+        try {
+            Candidate candidate = jobApplicationService.applyForJob(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Application submitted successfully! You can now login to track your status.", candidate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Application failed: " + e.getMessage()));
+        }
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER')")

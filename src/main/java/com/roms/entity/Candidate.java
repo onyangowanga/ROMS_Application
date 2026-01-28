@@ -1,5 +1,6 @@
 package com.roms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import com.roms.enums.CandidateStatus;
 import com.roms.enums.MedicalStatus;
@@ -104,6 +105,7 @@ public class Candidate extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_order_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "employer", "candidates"})
     private JobOrder jobOrder;
 
     @Column(name = "expected_position", length = 200)

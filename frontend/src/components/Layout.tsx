@@ -12,6 +12,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   };
 
   const canAccessCandidates = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER']);
+  const canAccessEmployers = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF']);
+  const isApplicant = user?.role === 'APPLICANT';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -30,12 +32,36 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 >
                   Dashboard
                 </Link>
+                {isApplicant && (
+                  <Link
+                    to="/my-application"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    My Application
+                  </Link>
+                )}
                 {canAccessCandidates && (
                   <Link
                     to="/candidates"
                     className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                   >
                     Candidates
+                  </Link>
+                )}
+                {canAccessEmployers && (
+                  <Link
+                    to="/employers"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    Employers
+                  </Link>
+                )}
+                {!isApplicant && (
+                  <Link
+                    to="/jobs"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    Jobs
                   </Link>
                 )}
               </div>

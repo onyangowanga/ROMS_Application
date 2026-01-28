@@ -56,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
@@ -77,6 +77,10 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/candidates/apply").permitAll()  // Job application endpoint
+                .requestMatchers("/api/employers").permitAll()  // Employer registration endpoint
+                .requestMatchers(HttpMethod.GET, "/api/job-orders").permitAll()  // Public job listings
+                .requestMatchers(HttpMethod.GET, "/api/job-orders/*").permitAll()  // Public job details
                 
                 // Static resources and frontend
                 .requestMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
@@ -91,11 +95,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/financial-reports/**").hasAnyRole("SUPER_ADMIN", "FINANCE_MANAGER")
                 
                 // OPERATIONS_STAFF endpoints
-                .requestMatchers("/api/candidates/**").hasAnyRole("SUPER_ADMIN", "OPERATIONS_STAFF", "FINANCE_MANAGER")
-                .requestMatchers("/api/documents/**").hasAnyRole("SUPER_ADMIN", "OPERATIONS_STAFF")
+                .requestMatchers("/api/candidates/**").hasAnyRole("SUPER_ADMIN", "OPERATIONS_STAFF", "FINANCE_MANAGER", "APPLICANT")
+                .requestMatchers("/api/documents/**").hasAnyRole("SUPER_ADMIN", "OPERATIONS_STAFF", "APPLICANT")
                 
                 // EMPLOYER endpoints
-                .requestMatchers("/api/job-orders/**").hasAnyRole("SUPER_ADMIN", "OPERATIONS_STAFF", "EMPLOYER")
+                .requestMatchers("/api/job-orders/**").authenticated()  // All authenticated users can view jobs
                 .requestMatchers("/api/employer/**").hasRole("EMPLOYER")
                 
                 // APPLICANT endpoints

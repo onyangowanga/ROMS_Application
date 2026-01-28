@@ -3,9 +3,9 @@ spring:
     name: ROMS
   
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/roms_db
-    username: roms_user
-    password: roms_password
+    url: jdbc:postgresql://127.0.0.1:5433/roms_db
+    username: postgres
+    password: JonaMia
     driver-class-name: org.postgresql.Driver
     
   jpa:

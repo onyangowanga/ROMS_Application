@@ -107,3 +107,41 @@ export interface WorkflowTransition {
   toStatus: CandidateStatus;
   reason?: string;
 }
+
+// Employer Types
+export interface Employer {
+  id: number;
+  companyName: string;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  country: string;
+  industry: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Job Order Types
+export type JobOrderStatus = 'PENDING_APPROVAL' | 'OPEN' | 'CLOSED';
+
+export interface JobOrder {
+  id: number;
+  jobOrderRef: string;
+  jobTitle: string;
+  headcountRequired: number;
+  headcountFilled?: number;
+  salaryMin?: number;
+  salaryMax?: number;
+  currency: string;
+  location: string;
+  country: string;
+  contractDurationMonths?: number;
+  requiredSkills?: string;
+  description: string;
+  status: JobOrderStatus;
+  employerId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

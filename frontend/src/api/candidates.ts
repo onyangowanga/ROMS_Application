@@ -4,7 +4,7 @@ import { ApiResponse, Candidate, CandidateDocument, CandidateStatus } from '../t
 export const candidateApi = {
   getAll: async (): Promise<Candidate[]> => {
     const response = await api.get<ApiResponse<Candidate[]>>('/api/candidates');
-    return response.data.data;
+    return response.data.data || [];
   },
 
   getById: async (id: number): Promise<Candidate> => {
@@ -43,7 +43,7 @@ export const candidateApi = {
   uploadDocument: async (candidateId: number, file: File, docType: string, expiryDate?: string, documentNumber?: string): Promise<CandidateDocument> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('documentType', docType);
+    formData.append('docType', docType);
     if (expiryDate) formData.append('expiryDate', expiryDate);
     if (documentNumber) formData.append('documentNumber', documentNumber);
 
@@ -68,5 +68,26 @@ export const candidateApi = {
 
   deleteDocument: async (documentId: number): Promise<void> => {
     await api.delete(`/api/documents/${documentId}`);
+  },
+
+  // Job application endpoint
+  applyForJob: async (applicationData: {
+    username: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    gender: string;
+    passportNo: string;
+    passportExpiry: string;
+    phoneNumber: string;
+    country: string;
+    currentAddress: string;
+    expectedPosition?: string;
+    jobOrderId: number;
+  }): Promise<Candidate> => {
+    const response = await api.post<ApiResponse<Candidate>>('/api/candidates/apply', applicationData);
+    return response.data.data || response.data;
   },
 };

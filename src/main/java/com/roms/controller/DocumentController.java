@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,25 +36,47 @@ public class DocumentController {
     @Autowired
     private GoogleDriveService driveService;
 
+    @Autowired(required = false)
+    private com.roms.service.LocalFileStorageService localFileStorageService;
+
     @PostMapping("/candidates/{candidateId}/documents")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'APPLICANT')")
     public ResponseEntity<?> uploadDocument(
             @PathVariable Long candidateId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("docType") DocumentType docType,
             @RequestParam(required = false) String documentNumber,
-            @RequestParam(required = false) String expiryDate) {
+            @RequestParam(required = false) String expiryDate,
+            Authentication authentication) {
 
         try {
             // Validate candidate exists
             Candidate candidate = candidateRepository.findById(candidateId)
                     .orElseThrow(() -> new RuntimeException("Candidate not found with id: " + candidateId));
 
-            // Upload to Google Drive
-            String driveFileId = driveService.uploadFile(file, null);
+            // Security check: If user is APPLICANT, ensure they own this candidate record
+            if (authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
+                String username = authentication.getName();
+                if (candidate.getUser() == null || !candidate.getUser().getUsername().equals(username)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(ApiResponse.error("You can only upload documents to your own application"));
+                }
+            }
+
+            // Upload to Google Drive or local storage
+            String driveFileId;
+            String shareableLink;
             
-            // Generate shareable link (not stored in entity)
-            String shareableLink = driveService.generateShareableLink(driveFileId);
+            if (localFileStorageService != null) {
+                // Use local file storage for development
+                driveFileId = localFileStorageService.storeFile(file);
+                shareableLink = localFileStorageService.generateShareableLink(driveFileId);
+            } else {
+                // Use Google Drive
+                driveFileId = driveService.uploadFile(file, null);
+                shareableLink = driveService.generateShareableLink(driveFileId);
+            }
 
             // Create document metadata
             CandidateDocument document = new CandidateDocument();

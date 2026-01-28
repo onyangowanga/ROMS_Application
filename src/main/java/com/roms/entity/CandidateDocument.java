@@ -1,5 +1,6 @@
 package com.roms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import com.roms.enums.DocumentType;
 import jakarta.persistence.*;
@@ -29,6 +30,7 @@ public class CandidateDocument extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidate_id", nullable = false)
+    @JsonIgnoreProperties({"documents", "jobOrder", "hibernateLazyInitializer", "handler"})
     private Candidate candidate;
 
     @Enumerated(EnumType.STRING)

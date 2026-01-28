@@ -6,6 +6,12 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CandidatesPage } from './pages/CandidatesPage';
 import { CandidateProfilePage } from './pages/CandidateProfilePage';
+import ApplicantRegisterPage from './pages/ApplicantRegisterPage';
+import EmployerRegisterPage from './pages/EmployerRegisterPage';
+import EmployersPage from './pages/EmployersPage';
+import JobsPage from './pages/JobsPage';
+import JobNewPage from './pages/JobNewPage';
+import MyApplicationPage from './pages/MyApplicationPage';
 import './index.css';
 
 function App() {
@@ -14,6 +20,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<ApplicantRegisterPage />} />
+          <Route path="/employer/register" element={<EmployerRegisterPage />} />
           
           <Route
             path="/dashboard"
@@ -38,6 +46,42 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OPERATIONS_STAFF']}>
                 <CandidateProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/employers"
+            element={
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OPERATIONS_STAFF']}>
+                <EmployersPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/jobs"
+            element={
+              <ProtectedRoute>
+                <JobsPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/jobs/new"
+            element={
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'EMPLOYER']}>
+                <JobNewPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/my-application"
+            element={
+              <ProtectedRoute allowedRoles={['APPLICANT']}>
+                <MyApplicationPage />
               </ProtectedRoute>
             }
           />

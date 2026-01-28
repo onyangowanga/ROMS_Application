@@ -3,25 +3,48 @@ version: '3.8'
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: roms-postgres
     environment:
       POSTGRES_DB: roms_db
-      POSTGRES_USER: roms_user
-      POSTGRES_PASSWORD: roms_password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: JonaMia
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./setup-database.sql:/docker-entrypoint-initdb.d/01-setup.sql
       - ./database-schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+      - ./insert-jobs.sql:/docker-entrypoint-initdb.d/03-jobs.sql
     networks:
       - roms-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U roms_user -d roms_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d roms_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: roms-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/roms_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: JonaMia
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    ports:
+      - "8080:8080"
+    networks:
+      - roms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   # pgAdmin (Optional - for database management UI)
   pgadmin:

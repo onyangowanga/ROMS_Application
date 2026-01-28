@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth';
 
@@ -100,6 +100,19 @@ export const LoginPage: React.FC = () => {
           <div className="text-sm text-center text-gray-600">
             <p>Demo Credentials:</p>
             <p className="font-mono text-xs mt-1">admin / password123</p>
+          </div>
+
+          <div className="mt-4 text-center">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-blue-500 hover:text-blue-700">
+                Register as Applicant
+              </Link>
+              {' or '}
+              <Link to="/employer/register" className="text-blue-500 hover:text-blue-700">
+                Register as Employer
+              </Link>
+            </p>
           </div>
         </form>
       </div>

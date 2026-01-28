@@ -17,14 +17,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('accessToken');
-    
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Check if user is logged in on mount and validate token
+    const validateSession = async () => {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('accessToken');
+      
+      if (storedUser && token) {
+        try {
+          // Validate token by fetching current user
+          const currentUser = await authApi.getCurrentUser();
+          setUser(currentUser);
+        } catch (error) {
+          // Token is invalid, clear everything
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    validateSession();
   }, []);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {

@@ -1,252 +1,456 @@
 # ROMS - Recruitment Operations Management System
 
+> **Status**: Phase 1 Complete ✅ | **Version**: 1.0.0 | **Date**: January 2026
+
 ## Overview
-Enterprise-grade Recruitment Operations Management System built with Java 17, Spring Boot 3.x, and PostgreSQL.
+Enterprise-grade Recruitment Operations Management System built with modern Java stack, React frontend, and containerized PostgreSQL database.
 
-## Phase 1 Implementation (Core Operations)
+## 🎯 Phase 1 Complete - Production Ready
 
-### Completed Features
-✅ **Identity & Access Management (JWT/RBAC)**
-- JWT-based authentication
+### Core Features Implemented
+✅ **Authentication & Authorization**
+- JWT-based authentication with access/refresh tokens
 - Role-based access control (RBAC)
 - 5 user roles: SUPER_ADMIN, FINANCE_MANAGER, OPERATIONS_STAFF, APPLICANT, EMPLOYER
+- Session persistence and automatic logout on token expiry
+- Secure password hashing with BCrypt
 
-✅ **Candidate Registry**
-- Complete candidate lifecycle management
-- Soft delete with unique constraint management
-- Internal reference number generation
+✅ **Candidate Management**
+- Full candidate lifecycle: APPLIED → DOCUMENTS_SUBMITTED → INTERVIEW → MEDICAL → OFFER → DEPLOYED
+- Internal reference number auto-generation
+- Soft delete with unique constraint management (passport validation)
+- Job application workflow with position selection
+- Applicant self-service dashboard
 
-✅ **Workflow State Machine**
-- Canonical state flow with guard logic
-- Medical Rule: Cannot issue offer without medical clearance
-- Document Rule: Passport must be valid for 6+ months
-- Fulfillment Rule: Job order capacity validation
+✅ **Job Order Management**
+- Job posting creation and management
+- Status tracking (OPEN, FILLED, CLOSED, CANCELLED)
+- Headcount tracking and fulfillment validation
+- Employer association and requirements management
+- 8 test job orders across multiple locations
 
-✅ **Basic Audit Logging**
-- Hibernate Envers integration
-- Automatic audit trail (_AUD tables)
-- Created/Modified by and timestamp tracking
+✅ **Document Management**
+- **Local file storage** for development (uploads/ directory)
+- Multi-document upload (Passport, Medical, Visa, Offer, Contract, Other)
+- Role-based access control (applicants upload to own records)
+- File type validation and metadata tracking
+- Document expiry monitoring capability
 
-✅ **Domain Entities**
-- User, Candidate, JobOrder, Payment, CandidateDocument, Employer
-- Financial immutability pattern (Payment ledger)
-- Document storage abstraction (Google Drive Phase 1, S3/GCS Phase 2+)
+✅ **Frontend Application (React + TypeScript)**
+- Modern React 18 with TypeScript
+- Vite for lightning-fast development
+- Tailwind CSS responsive design
+- Protected routes and authentication flow
+- Complete user workflows:
+  - Applicant registration and job application
+  - Document upload with real-time feedback
+  - Candidate dashboard
+  - Admin candidate management
 
-✅ **Document Management API** (Phase 1.5)
-- Secure file upload/download with multipart support
-- Backend file streaming (no direct cloud URLs exposed)
-- Role-based document access control
-- DocumentType validation (PASSPORT, MEDICAL, OFFER, etc.)
+✅ **Development Environment**
+- Docker Compose for PostgreSQL 16 and pgAdmin
+- Spring Boot DevTools with hot reload
+- VS Code integration with auto-compile
+- Local file storage (no cloud dependencies)
+- One-command setup
 
-✅ **Expiry Intelligence** (Phase 1.5)
-- Automated passport and medical expiry monitoring
-- Scheduled job runs daily at 2:00 AM
-- 90-day advance warning system (EXPIRING_SOON flag)
-- Proactive alerts for expired documents (EXPIRED flag)
+### Bug Fixes & Improvements
+✅ Fixed circular reference issues in JPA entities (Candidate ↔ JobOrder ↔ Employer)  
+✅ Added @JsonIgnoreProperties for clean JSON serialization  
+✅ Hibernate lazy-loading proxy handling  
+✅ API response wrapper consistency across all endpoints  
+✅ Document upload parameter naming fixes (docType)  
+✅ Security enhancements for applicant document uploads  
+✅ Session validation on page refresh  
 
-✅ **Offer Letter Domain** (Phase 1.5)
-- Complete offer lifecycle: DRAFT → ISSUED → SIGNED
-- Medical clearance guard (cannot issue without PASSED status)
-- Interview optional (workflow flexibility)
-- APPLICANT-only signing (legal validity)
-- No concurrent offers to same candidate
+## 🛠️ Tech Stack
 
-## Tech Stack
-- **Backend**: Java 17, Spring Boot 3.2.2
-- **Security**: Spring Security + JWT
-- **Database**: PostgreSQL 15+
-- **ORM**: Hibernate 6.4.1 + Envers
-- **Build Tool**: Maven 3.9+
-- **Document Storage**: Google Drive API v3 (Phase 1), S3-compatible abstraction (Phase 2)
+### Backend
+- **Java 17** (LTS) - Modern Java features
+- **Spring Boot 3.2.2** - Enterprise application framework
+- **PostgreSQL 16** - Dockerized relational database
+- **Spring Security** - JWT-based authentication
+- **Hibernate/JPA** - ORM with automatic auditing (Envers)
+- **Lombok** - Reduced boilerplate code
+- **Maven** - Dependency management
 
-## Project Structure
+### Frontend
+- **React 18.2.0** - Modern UI library
+- **TypeScript 5.6.2** - Type-safe JavaScript
+- **Vite 5.4.21** - Fast build tool with HMR
+- **Axios** - HTTP client with interceptors
+- **Tailwind CSS 3.4.17** - Utility-first styling
+- **React Router 7.1.1** - Client-side routing
+
+### Database & DevOps
+- **PostgreSQL 16-alpine** (Docker) - Main database
+- **pgAdmin 4** (Docker) - Database management UI
+- **Docker Compose** - Service orchestration
+- **Git** - Version control
+
+## 📁 Project Structure
 ```
-src/main/java/com/roms/
-├── config/              # Configuration classes
-│   ├── JpaAuditConfig.java
-│   └── SecurityConfig.java
-├── controller/          # REST controllers
-│   ├── AuthController.java
-│   └── CandidateController.java
-├── dto/                 # Data Transfer Objects
-│   ├── LoginRequest.java
-│   ├── RegisterRequest.java
-│   ├── AuthResponse.java
-│   └── ApiResponse.java
-├── entity/              # JPA entities
-│   ├── base/
-│   │   └── BaseAuditEntity.java
-│   ├── User.java
-│   ├── Candidate.java
-│   ├── JobOrder.java
-│   ├── Payment.java
-│   ├── CandidateDocument.java
-│   └── Employer.java
-├── enums/               # Enumerations
-│   ├── UserRole.java
-│   ├── CandidateStatus.java
-│   ├── PaymentType.java
-│   ├── DocumentType.java
-│   ├── MedicalStatus.java
-│   └── JobOrderStatus.java
-├── exception/           # Custom exceptions
-│   ├── WorkflowException.java
-│   └── ResourceNotFoundException.java
-├── repository/          # Spring Data repositories
-│   ├── UserRepository.java
-│   ├── CandidateRepository.java
-│   ├── JobOrderRepository.java
-│   ├── PaymentRepository.java
-│   ├── CandidateDocumentRepository.java
-│   └── EmployerRepository.java
-├── security/            # Security components
-│   ├── JwtTokenProvider.java
-│   ├── JwtAuthenticationFilter.java
-│   └── CustomUserDetailsService.java
-├── service/             # Business logic services
-│   ├── CandidateWorkflowService.java
-│   └── GoogleDriveService.java
-└── RomsApplication.java # Main application
+ROMS/
+├── src/main/java/com/roms/
+│   ├── config/              # Application configuration
+│   │   ├── SecurityConfig.java
+│   │   ├── JpaAuditConfig.java
+│   │   └── DataInitializer.java
+│   ├── controller/          # REST API controllers
+│   │   ├── AuthController.java
+│   │   ├── CandidateController.java
+│   │   ├── JobOrderController.java
+│   │   └── DocumentController.java
+│   ├── dto/                 # Data Transfer Objects
+│   │   ├── ApiResponse.java
+│   │   ├── AuthResponse.java
+│   │   └── LoginRequest.java
+│   ├── entity/              # JPA entities
+│   │   ├── base/BaseAuditEntity.java
+│   │   ├── User.java
+│   │   ├── Candidate.java
+│   │   ├── JobOrder.java
+│   │   ├── Employer.java
+│   │   ├── CandidateDocument.java
+│   │   └── Payment.java
+│   ├── enums/               # Enumerations
+│   │   ├── UserRole.java
+│   │   ├── CandidateStatus.java
+│   │   ├── JobOrderStatus.java
+│   │   └── DocumentType.java
+│   ├── repository/          # Data access layer
+│   │   ├── CandidateRepository.java
+│   │   ├── JobOrderRepository.java
+│   │   └── CandidateDocumentRepository.java
+│   ├── security/            # JWT and auth
+│   │   ├── JwtTokenProvider.java
+│   │   ├── JwtAuthenticationFilter.java
+│   │   └── CustomUserDetailsService.java
+│   ├── service/             # Business logic
+│   │   ├── JobApplicationService.java
+│   │   ├── CandidateWorkflowService.java
+│   │   └── LocalFileStorageService.java
+│   └── RomsApplication.java
+├── frontend/
+│   ├── src/
+│   │   ├── api/             # API clients
+│   │   │   ├── axios.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── jobs.ts
+│   │   │   └── candidates.ts
+│   │   ├── components/      # Reusable components
+│   │   │   ├── Layout.tsx
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── StatusBadge.tsx
+│   │   ├── context/         # React context
+│   │   │   └── AuthContext.tsx
+│   │   ├── pages/           # Page components
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── ApplicantRegisterPage.tsx
+│   │   │   ├── JobsPage.tsx
+│   │   │   ├── CandidatesPage.tsx
+│   │   │   └── MyApplicationPage.tsx
+│   │   └── types/           # TypeScript types
+│   │       └── index.ts
+│   ├── package.json
+│   └── vite.config.ts
+├── uploads/                 # Local file storage
+├── docker-compose.dev.yml   # Development services
+├── pom.xml                  # Maven dependencies
+└── README.md
 ```
 
-## Setup Instructions
+## 🚀 Quick Start
 
 ### Prerequisites
-- Java 17 or higher
-- PostgreSQL 15+
-- Maven 3.6+
-- Google Cloud Account (for Google Drive API - Free Tier)
+- **Docker Desktop** (for PostgreSQL)
+- **Node.js 18+** (for frontend)
+- **Java 17+** (comes with the project)
 
-### Database Setup
-1. Create PostgreSQL database:
-```sql
-CREATE DATABASE roms_db;
-CREATE USER roms_user WITH ENCRYPTED PASSWORD 'roms_password';
-GRANT ALL PRIVILEGES ON DATABASE roms_db TO roms_user;
-```
-
-2. The application will auto-create tables on first run (ddl-auto: update)
-
-### Application Configuration
-Update `src/main/resources/application.yaml`:
-
-```yaml
-# Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/roms_db
-spring.datasource.username=roms_user
-spring.datasource.password=your_password
-
-# JWT Secret (MUST change in production)
-jwt.secret=your-256-bit-secret-key-minimum-32-characters
-
-# Google Drive API
-google.drive.credentials-file-path=credentials.json
-google.drive.folder-id=your-google-drive-folder-id
-```
-
-### Google Drive Setup
-1. Create a Google Cloud Project
-2. Enable Google Drive API
-3. Create Service Account and download credentials.json
-4. Place credentials.json in project root
-5. Create a folder in Google Drive and share with service account email
-6. Copy folder ID from URL and update in application.yaml
-
-**For detailed setup, see [LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md)**
-
-### Build & Run
+### 1. Start Database (30 seconds)
 ```bash
-# Build
-mvn clean install
-
-# Run
-mvn spring-boot:run
-
-# Or run the JAR
-java -jar target/Roms-0.0.1-SNAPSHOT.jar
+docker-compose -f docker-compose.dev.yml up -d
 ```
 
-Application will start on `http://localhost:8080`
+This starts:
+- PostgreSQL 16 on port 5433
+- pgAdmin on port 5050
 
-## API Endpoints
+### 2. Populate Test Data (1 minute)
+1. Open pgAdmin: http://localhost:5050
+2. Login: `admin@roms.com` / `admin`
+3. Add Server:
+   - Name: ROMS Database
+   - Host: `postgres` | Port: `5432`
+   - Database: `roms_db`
+   - Username: `postgres` | Password: `JonaMia`
+4. Run `insert-jobs.sql` in Query Tool
+
+### 3. Start Backend (2 minutes)
+```bash
+mvnw.cmd spring-boot:run
+```
+
+Backend starts on http://localhost:8080
+
+### 4. Start Frontend (1 minute)
+```bash
+cd frontend
+npm install      # First time only
+npm run dev
+```
+
+Frontend starts on http://localhost:3002
+
+### 5. Test Application
+- Open http://localhost:3002
+- Login: `admin` / `password123`
+- Navigate through jobs, candidates, and test registration
+
+**For detailed setup, see [QUICKSTART.md](QUICKSTART.md)**
+
+## 🔑 Test Accounts
+
+| Role | Username | Password | Access Level |
+|------|----------|----------|-------------|
+| Super Admin | admin | password123 | Full system access |
+| Operations | operations | password123 | Candidates & documents |
+| Finance | finance | password123 | Payments & reports |
+
+Create applicant accounts via registration page.
+
+## 📡 API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
+- `POST /api/auth/login` - Login and get JWT tokens
 - `GET /api/auth/me` - Get current user details
+- `POST /api/auth/refresh` - Refresh access token
 
-### Candidates (RBAC protected)
-- `GET /api/candidates` - Get all active candidates
-- `GET /api/candidates/{id}` - Get candidate by ID
-- `POST /api/candidates` - Create new candidate
+### Job Orders
+- `GET /api/job-orders` - Get all active jobs
+- `POST /api/job-orders` - Create new job (Admin/Ops)
+- `GET /api/job-orders/{id}` - Get job details
+- `PUT /api/job-orders/{id}` - Update job
+
+### Candidates
+- `GET /api/candidates` - Get all candidates (Admin/Ops)
+- `POST /api/candidates` - Create candidate (Apply for job)
+- `GET /api/candidates/{id}` - Get candidate details
 - `PUT /api/candidates/{id}` - Update candidate
-- `DELETE /api/candidates/{id}` - Soft delete candidate
-- `POST /api/candidates/{id}/transition` - Transition candidate status
-- `GET /api/candidates/{id}/can-transition/{status}` - Check if transition is allowed
+- `DELETE /api/candidates/{id}` - Soft delete
 
-### Example API Calls
+### Documents
+- `POST /api/candidates/{id}/documents` - Upload document
+- `GET /api/candidates/{id}/documents` - Get candidate documents
+- `GET /api/documents/{id}/download` - Download document
 
-#### Register User
+### Example: Login & Create Candidate
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "email": "admin@roms.com",
-    "password": "password123",
-    "fullName": "System Administrator",
-    "role": "SUPER_ADMIN"
-  }'
-```
-
-#### Login
-```bash
+# 1. Login
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "password123"
-  }'
-```
+  -d '{"username":"admin","password":"password123"}'
 
-#### Create Candidate (with JWT token)
-```bash
+# Response: { "accessToken": "eyJ...", "user": {...} }
+
+# 2. Create Candidate (use token from login)
 curl -X POST http://localhost:8080/api/candidates \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Authorization: Bearer eyJ..." \
   -d '{
     "firstName": "John",
     "lastName": "Doe",
-    "dateOfBirth": "1990-01-15",
-    "gender": "Male",
-    "passportNo": "AB123456",
-    "passportExpiry": "2028-12-31",
-    "email": "john.doe@example.com",
-    "phoneNumber": "+254712345678",
-    "country": "Kenya"
+    "email": "john@example.com",
+    "passportNo": "AB123456"
   }'
 ```
 
-## Security Features
+## 🔒 Security Features
 
 ### JWT Authentication
-- Access token validity: 24 hours
-- Refresh token validity: 7 days
-- HMAC-SHA256 signing algorithm
+- **Access Token**: 24 hours validity
+- **Refresh Token**: 7 days validity
+- **Algorithm**: HMAC-SHA256
+- **Auto-logout**: On token expiry or invalid token
 
-### RBAC Matrix
-| Endpoint | SUPER_ADMIN | FINANCE_MANAGER | OPERATIONS_STAFF | EMPLOYER | APPLICANT |
-|----------|-------------|-----------------|------------------|----------|-----------|
-| User Management | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Candidates | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Documents | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Payments | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Job Orders | ✅ | ❌ | ✅ | ✅ | ❌ |
+### Role-Based Access Control (RBAC)
+| Resource | SUPER_ADMIN | OPERATIONS_STAFF | FINANCE_MANAGER | APPLICANT | EMPLOYER |
+|----------|-------------|------------------|-----------------|-----------|----------|
+| Users | ✅ Full | ❌ | ❌ | ❌ | ❌ |
+| Candidates | ✅ Full | ✅ Full | ✅ View | ✅ Own | ❌ |
+| Job Orders | ✅ Full | ✅ Full | ❌ | ✅ View | ✅ Own |
+| Documents | ✅ Full | ✅ Full | ❌ | ✅ Own | ❌ |
+| Payments | ✅ Full | ❌ | ✅ Full | ❌ | ❌ |
 
-## Workflow State Machine
+### Password Security
+- BCrypt hashing with salt
+- Minimum 8 characters
+- Automatic hash verification
 
-### Canonical Flow
+## 🔄 Candidate Workflow
+
+### State Transitions
 ```
+APPLIED → DOCUMENTS_SUBMITTED → INTERVIEW → MEDICAL → OFFER → DEPLOYED
+              ↓                     ↓          ↓        ↓
+         REJECTED            REJECTED     FAILED   REJECTED
+```
+
+### Validation Rules
+- **Document Rule**: Passport must be valid for 6+ months
+- **Medical Rule**: Cannot issue offer without medical clearance
+- **Fulfillment Rule**: Job order capacity validation
+- **Status Rule**: Only valid state transitions allowed
+
+## 🗄️ Database Schema
+
+Auto-generated via JPA/Hibernate with these key entities:
+
+### Core Tables
+- `users` - Authentication and user roles
+- `candidates` - Applicant registry with soft delete
+- `job_orders` - Job postings and requirements
+- `employers` - Employer/client information
+- `candidate_documents` - Document metadata and file references
+- `payments` - Financial transactions (immutable ledger)
+
+### Audit Tables (Envers)
+- `*_AUD` - Automatic audit trail for all entities
+- Tracks: who changed what, when
+- Full history retention
+
+### Key Relationships
+```
+User ←→ Candidate (one-to-one via user_id)
+Candidate ←→ JobOrder (many-to-one)
+Candidate ←→ CandidateDocument (one-to-many)
+JobOrder ←→ Employer (many-to-one)
+Candidate ←→ Payment (one-to-many)
+```
+
+## ⚙️ Configuration
+
+### Database (application.yaml)
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5433/roms_db
+    username: postgres
+    password: JonaMia
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update tables
+    show-sql: true      # Log SQL queries
+```
+
+### File Upload
+```yaml
+file:
+  upload-dir: uploads/  # Local storage directory
+  max-size: 10MB       # Max file size
+```
+
+### JWT
+```yaml
+jwt:
+  secret: [256-bit-secret]
+  expiration: 86400000      # 24 hours
+  refresh-expiration: 604800000  # 7 days
+```
+
+## 🐛 Troubleshooting
+
+### Backend Won't Start
+```bash
+# Check PostgreSQL is running
+docker ps
+
+# Restart database
+docker-compose -f docker-compose.dev.yml restart postgres
+
+# Check logs
+docker logs roms-postgres-dev
+```
+
+### Frontend Not Loading
+```bash
+cd frontend
+rm -rf node_modules
+npm install
+npm run dev
+```
+
+### Database Connection Issues
+1. Verify PostgreSQL is running: `docker ps`
+2. Check credentials in application.yaml
+3. Test connection in pgAdmin
+
+### Port Already in Use
+```bash
+# Find process using port
+netstat -ano | findstr :8080
+
+# Change port in application.yaml
+server.port=8081
+```
+
+## 📚 Documentation
+
+- **[PHASE_1_COMPLETE.md](PHASE_1_COMPLETE.md)** - Phase 1 completion summary
+- **[QUICKSTART.md](QUICKSTART.md)** - Detailed setup guide
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture
+- **[FRONTEND_FEATURES.md](FRONTEND_FEATURES.md)** - Frontend capabilities
+
+## 🎯 Phase 2 Roadmap
+
+### Planned Features
+1. **Workflow Automation**
+   - Email notifications on status changes
+   - Automated document expiry alerts
+   - Scheduled job assignments
+
+2. **Employer Portal**
+   - Job posting interface
+   - Candidate viewing dashboard
+   - Application tracking
+
+3. **Advanced Reporting**
+   - Candidate status reports
+   - Job order analytics
+   - Financial summaries
+   - Export to Excel/PDF
+
+4. **Production Deployment**
+   - Cloud database migration (Azure/AWS)
+   - Google Drive integration
+   - CI/CD pipeline
+   - Environment-specific configs
+   - HTTPS and domain setup
+
+## 🤝 Contributing
+
+1. Create feature branch from `main`
+2. Make changes and test thoroughly
+3. Update documentation
+4. Submit pull request
+
+## 📄 License
+
+Proprietary - All Rights Reserved  
+© 2026 ROMS Development Team
+
+## 👥 Support
+
+For issues or questions:
+- Check documentation in `/docs` folder
+- Review error logs in backend terminal
+- Check browser console (F12) for frontend issues
+- Review this README and QUICKSTART.md
+
+---
+
+**Version**: 1.0.0 | **Status**: Phase 1 Complete ✅ | **Last Updated**: January 2026
 APPLIED → DOCS_SUBMITTED → INTERVIEWED → MEDICAL_PASSED → OFFER_ISSUED → OFFER_ACCEPTED → PLACED
 ```
 
