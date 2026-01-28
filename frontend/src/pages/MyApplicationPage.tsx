@@ -1,311 +1,413 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { candidateApi } from '../api/candidates';
-import { Candidate, CandidateDocument } from '../types';
+import { Candidate, CandidateDocument, DocumentType } from '../types';
+import { Layout } from '../components/Layout';
+import { StatusBadge } from '../components/StatusBadge';
+
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
 
 const MyApplicationPage: React.FC = () => {
   const { user } = useAuth();
-  const [application, setApplication] = useState<Candidate | null>(null);
-  const [documents, setDocuments] = useState<CandidateDocument[]>([]);
+  const navigate = useNavigate();
+  const [applications, setApplications] = useState<Candidate[]>([]);
+  const [documents, setDocuments] = useState<{ [key: number]: CandidateDocument[] }>({});
   const [loading, setLoading] = useState(true);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [error, setError] = useState('');
+  
+  // Document upload state
+  const [uploadingFor, setUploadingFor] = useState<number | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState<DocumentType>('PASSPORT');
+  const [uploadExpiryDate, setUploadExpiryDate] = useState('');
+  const [uploadDocNumber, setUploadDocNumber] = useState('');
+
+  // Expanded application tracking
+  const [expandedApp, setExpandedApp] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchMyApplication();
+    loadApplications();
   }, []);
 
-  const fetchMyApplication = async () => {
+  const loadApplications = async () => {
     try {
       setLoading(true);
-      const candidates = await candidateApi.getAll();
-      // Find candidate by email matching user email
-      const myCandidate = candidates.find(c => c.email === user?.email);
-      
-      if (myCandidate) {
-        setApplication(myCandidate);
-        const docs = await candidateApi.getDocuments(myCandidate.id);
-        setDocuments(docs);
+      setError('');
+      if (!user?.email) {
+        setError('User email not found');
+        return;
       }
+
+      const apps = await candidateApi.getMyApplications(user.email);
+      setApplications(apps);
+
+      // Load documents for all applications
+      const docsMap: { [key: number]: CandidateDocument[] } = {};
+      for (const app of apps) {
+        try {
+          const docs = await candidateApi.getDocuments(app.id);
+          docsMap[app.id] = docs;
+        } catch (err) {
+          docsMap[app.id] = [];
+        }
+      }
+      setDocuments(docsMap);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load application');
+      if (err.response?.status === 500 || err.response?.status === 404) {
+        setApplications([]);
+      } else {
+        setError(err.response?.data?.message || 'Failed to load applications');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
-    const file = e.target.files?.[0];
-    if (!file || !application) return;
+  const handleUploadDocument = async (e: React.FormEvent, candidateId: number) => {
+    e.preventDefault();
+    if (!uploadFile) return;
 
-    setUploadingDoc(true);
+    setUploadingFor(candidateId);
+
     try {
-      await candidateApi.uploadDocument(application.id, file, docType);
-      fetchMyApplication();
+      await candidateApi.uploadDocument(
+        candidateId,
+        uploadFile,
+        uploadDocType,
+        uploadExpiryDate || undefined,
+        uploadDocNumber || undefined
+      );
+
+      // Reset form
+      setUploadFile(null);
+      setUploadExpiryDate('');
+      setUploadDocNumber('');
+
+      // Reload documents for this application
+      const docs = await candidateApi.getDocuments(candidateId);
+      setDocuments(prev => ({ ...prev, [candidateId]: docs }));
+
       alert('Document uploaded successfully!');
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to upload document');
     } finally {
-      setUploadingDoc(false);
+      setUploadingFor(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      'APPLIED': 'bg-blue-100 text-blue-800',
-      'DOCS_SUBMITTED': 'bg-yellow-100 text-yellow-800',
-      'INTERVIEWED': 'bg-purple-100 text-purple-800',
-      'MEDICAL_PASSED': 'bg-green-100 text-green-800',
-      'OFFER_ISSUED': 'bg-indigo-100 text-indigo-800',
-      'OFFER_ACCEPTED': 'bg-teal-100 text-teal-800',
-      'PLACED': 'bg-green-200 text-green-900',
-      'REJECTED': 'bg-red-100 text-red-800',
-      'WITHDRAWN': 'bg-gray-100 text-gray-800'
+  const handleDownloadDocument = async (docId: number, fileName: string) => {
+    try {
+      const blob = await candidateApi.downloadDocument(docId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert('Failed to download document');
+    }
+  };
+
+  const toggleExpanded = (appId: number) => {
+    setExpandedApp(expandedApp === appId ? null : appId);
+  };
+
+  const getProgressPercentage = (status: CandidateStatus): number => {
+    const progressMap: Record<CandidateStatus, number> = {
+      APPLIED: 7,
+      DOCUMENTS_PENDING: 14,
+      DOCUMENTS_UNDER_REVIEW: 21,
+      DOCUMENTS_APPROVED: 28,
+      INTERVIEW_SCHEDULED: 42,
+      INTERVIEW_COMPLETED: 50,
+      MEDICAL_IN_PROGRESS: 64,
+      MEDICAL_PASSED: 71,
+      OFFER_ISSUED: 85,
+      OFFER_SIGNED: 92,
+      DEPLOYED: 96,
+      PLACED: 100,
+      REJECTED: 0,
+      WITHDRAWN: 0,
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return progressMap[status] || 0;
+  };
+
+  const getStatusLabel = (status: CandidateStatus): string => {
+    return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase());
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-600">Loading your application...</div>
-      </div>
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-xl text-gray-600">Loading your applications...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        {error}
-      </div>
-    );
-  }
-
-  if (!application) {
-    return (
-      <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-        No application found. Please apply for a job first.
-      </div>
+      <Layout>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Job Application</h1>
-
-      {/* Application Status */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Application Status</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-600">Reference Number</p>
-            <p className="font-semibold text-gray-900">{application.internalRefNo}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Current Status</p>
-            <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusColor(application.currentStatus)}`}>
-              {application.currentStatus.replace(/_/g, ' ')}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Medical Status</p>
-            <p className="font-semibold text-gray-900">{application.medicalStatus || 'PENDING'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Expected Position</p>
-            <p className="font-semibold text-gray-900">{application.expectedPosition || 'N/A'}</p>
-          </div>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-8 py-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">My Applications</h1>
+          <button
+            onClick={() => navigate('/jobs')}
+            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Apply for New Job
+          </button>
         </div>
-      </div>
 
-      {/* Personal Information */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Personal Information</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-600">Full Name</p>
-            <p className="font-semibold text-gray-900">{application.firstName} {application.lastName}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Date of Birth</p>
-            <p className="font-semibold text-gray-900">{new Date(application.dateOfBirth).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Passport Number</p>
-            <p className="font-semibold text-gray-900">{application.passportNo}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Passport Expiry</p>
-            <p className="font-semibold text-gray-900">{new Date(application.passportExpiry).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Email</p>
-            <p className="font-semibold text-gray-900">{application.email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Phone</p>
-            <p className="font-semibold text-gray-900">{application.phoneNumber}</p>
-          </div>
-          <div className="col-span-2">
-            <p className="text-sm text-gray-600">Country</p>
-            <p className="font-semibold text-gray-900">{application.country}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Documents */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">My Documents</h2>
-        
-        {documents.length > 0 ? (
-          <div className="mb-4">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Document Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {documents.map(doc => (
-                  <tr key={doc.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {doc.docType.replace(/_/g, ' ')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.fileName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(doc.uploadedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {doc.isVerified ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Applications List */}
+        {applications.length === 0 ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+            <svg className="mx-auto h-12 w-12 text-yellow-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 className="text-lg font-medium text-yellow-900 mb-2">No Applications Yet</h3>
+            <p className="text-yellow-700 mb-4">You haven't applied for any jobs. Browse available positions and submit your first application.</p>
+            <button
+              onClick={() => navigate('/jobs')}
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+            >
+              Browse Jobs
+            </button>
           </div>
         ) : (
-          <p className="text-gray-600 mb-4">No documents uploaded yet.</p>
+          <div className="space-y-4">
+            {applications.map((app) => (
+              <div key={app.id} className="bg-white shadow rounded-lg overflow-hidden">
+                {/* Application Header */}
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {app.firstName} {app.lastName}
+                        </h2>
+                        <StatusBadge status={app.currentStatus} />
+                      </div>
+                      <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                        <span>Ref: {app.internalRefNo}</span>
+                        <span>•</span>
+                        <span>Applied: {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}</span>
+                        {app.jobOrder && (
+                          <>
+                            <span>•</span>
+                            <span>Position: {app.jobOrder.jobTitle || 'N/A'}</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mt-3">
+                        <div className="flex justify-between text-xs text-gray-600 mb-1">
+                          <span>{getStatusLabel(app.currentStatus)}</span>
+                          <span>{getProgressPercentage(app.currentStatus)}% Complete</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              app.currentStatus === 'REJECTED' || app.currentStatus === 'WITHDRAWN'
+                                ? 'bg-red-500'
+                                : app.currentStatus === 'PLACED'
+                                ? 'bg-green-500'
+                                : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${getProgressPercentage(app.currentStatus)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Interview Information */}
+                      {app.interviewDate && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                          <div className="flex items-center space-x-2 text-sm text-blue-800">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium">Interview Scheduled:</span>
+                            <span>{new Date(app.interviewDate).toLocaleDateString()}</span>
+                            {app.interviewTime && <span>at {app.interviewTime}</span>}
+                          </div>
+                          {app.interviewLocation && (
+                            <div className="mt-1 text-sm text-blue-700 flex items-center space-x-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span>{app.interviewLocation}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleExpanded(app.id)}
+                      className="ml-4 text-primary-600 hover:text-primary-800"
+                    >
+                      {expandedApp === app.id ? (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded Content */}
+                {expandedApp === app.id && (
+                  <div className="px-6 py-4 bg-gray-50">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Application Details */}
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Application Details</h3>
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                          <div>
+                            <dt className="font-medium text-gray-500">Email</dt>
+                            <dd className="text-gray-900">{app.email}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-gray-500">Phone</dt>
+                            <dd className="text-gray-900">{app.phoneNumber}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-gray-500">Country</dt>
+                            <dd className="text-gray-900">{app.country}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-gray-500">Passport No</dt>
+                            <dd className="text-gray-900">{app.passportNo}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-gray-500">Passport Expiry</dt>
+                            <dd className="text-gray-900">
+                              {app.passportExpiry ? new Date(app.passportExpiry).toLocaleDateString() : 'N/A'}
+                            </dd>
+                          </div>
+                          {app.medicalStatus && (
+                            <div>
+                              <dt className="font-medium text-gray-500">Medical Status</dt>
+                              <dd><StatusBadge status={app.medicalStatus} /></dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+
+                      {/* Documents Section */}
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Documents</h3>
+                        
+                        {/* Upload Form */}
+                        <form onSubmit={(e) => handleUploadDocument(e, app.id)} className="mb-4 p-3 bg-white rounded border border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Upload Document</h4>
+                          <div className="space-y-2">
+                            <div>
+                              <select
+                                value={uploadDocType}
+                                onChange={(e) => setUploadDocType(e.target.value as DocumentType)}
+                                className="block w-full text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                              >
+                                {DOCUMENT_TYPES.map((type) => (
+                                  <option key={type} value={type}>{type}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <input
+                                type="file"
+                                required
+                                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="text"
+                                placeholder="Doc Number (Optional)"
+                                value={uploadDocNumber}
+                                onChange={(e) => setUploadDocNumber(e.target.value)}
+                                className="block w-full text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                              />
+                              <input
+                                type="date"
+                                value={uploadExpiryDate}
+                                onChange={(e) => setUploadExpiryDate(e.target.value)}
+                                className="block w-full text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={uploadingFor === app.id || !uploadFile}
+                              className="w-full py-1.5 px-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                            >
+                              {uploadingFor === app.id ? 'Uploading...' : 'Upload'}
+                            </button>
+                          </div>
+                        </form>
+
+                        {/* Documents List */}
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {(!documents[app.id] || documents[app.id].length === 0) ? (
+                            <p className="text-sm text-gray-500 text-center py-2">No documents uploaded</p>
+                          ) : (
+                            documents[app.id].map((doc) => (
+                              <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200 text-sm">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-gray-900 truncate">{doc.fileName}</p>
+                                  <div className="flex items-center space-x-2 mt-0.5">
+                                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">{doc.docType}</span>
+                                    <span className="text-xs text-gray-500">{(doc.fileSize / 1024).toFixed(1)} KB</span>
+                                    {doc.expiryDate && (
+                                      <span className="text-xs text-gray-500">
+                                        Exp: {new Date(doc.expiryDate).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleDownloadDocument(doc.id, doc.fileName)}
+                                  className="ml-2 text-primary-600 hover:text-primary-800 text-xs"
+                                >
+                                  Download
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
-
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">Upload Additional Documents</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Passport Copy</label>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileUpload(e, 'PASSPORT')}
-                disabled={uploadingDoc}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Photo</label>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png"
-                onChange={(e) => handleFileUpload(e, 'PHOTO')}
-                disabled={uploadingDoc}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Educational Certificate</label>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileUpload(e, 'EDUCATIONAL_CERTIFICATE')}
-                disabled={uploadingDoc}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Medical Certificate</label>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileUpload(e, 'MEDICAL_CERTIFICATE')}
-                disabled={uploadingDoc}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-          </div>
-        </div>
       </div>
-
-      {/* Application Timeline */}
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Application Process</h2>
-        <div className="space-y-3">
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${application.currentStatus === 'APPLIED' ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
-              1
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Applied</p>
-              <p className="text-sm text-gray-600">Your application has been submitted</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${['DOCS_SUBMITTED', 'INTERVIEWED', 'MEDICAL_PASSED', 'OFFER_ISSUED', 'OFFER_ACCEPTED', 'PLACED'].includes(application.currentStatus) ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
-              2
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Documents Submitted</p>
-              <p className="text-sm text-gray-600">Required documents uploaded and verified</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${['INTERVIEWED', 'MEDICAL_PASSED', 'OFFER_ISSUED', 'OFFER_ACCEPTED', 'PLACED'].includes(application.currentStatus) ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
-              3
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Interview</p>
-              <p className="text-sm text-gray-600">Interview scheduled and completed</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${['MEDICAL_PASSED', 'OFFER_ISSUED', 'OFFER_ACCEPTED', 'PLACED'].includes(application.currentStatus) ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
-              4
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Medical Clearance</p>
-              <p className="text-sm text-gray-600">Medical examination completed</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${['OFFER_ISSUED', 'OFFER_ACCEPTED', 'PLACED'].includes(application.currentStatus) ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
-              5
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Offer Issued</p>
-              <p className="text-sm text-gray-600">Job offer letter issued</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${application.currentStatus === 'PLACED' ? 'bg-green-500 text-white' : 'bg-gray-300'}`}>
-              6
-            </div>
-            <div className="ml-4">
-              <p className="font-semibold">Placed</p>
-              <p className="text-sm text-gray-600">Successfully placed in job</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

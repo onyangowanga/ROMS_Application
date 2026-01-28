@@ -1,5 +1,6 @@
 package com.roms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -49,6 +50,7 @@ public class Employer extends BaseAuditEntity {
     private String industry;
 
     @OneToMany(mappedBy = "employer", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("employer")
     @Builder.Default
     private List<JobOrder> jobOrders = new ArrayList<>();
 }

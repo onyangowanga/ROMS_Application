@@ -33,5 +33,14 @@ export const jobsApi = {
   updateJobStatus: async (id: number, status: string): Promise<JobOrder> => {
     const response = await api.patch(`/api/job-orders/${id}/status`, { status });
     return response.data;
+  },
+
+  updateJob: async (id: number, data: Partial<JobOrder>): Promise<JobOrder> => {
+    const response = await api.put(`/api/job-orders/${id}`, data);
+    return response.data.data || response.data;
+  },
+
+  deleteJob: async (id: number): Promise<void> => {
+    await api.delete(`/api/job-orders/${id}`);
   }
 };

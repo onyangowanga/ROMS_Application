@@ -15,6 +15,8 @@ public interface EmployerRepository extends JpaRepository<Employer, Long> {
     
     Optional<Employer> findByCompanyName(String companyName);
     
+    Optional<Employer> findByContactEmail(String contactEmail);
+    
     @Query("SELECT e FROM Employer e WHERE e.deletedAt IS NULL")
     List<Employer> findAllActive();
 }

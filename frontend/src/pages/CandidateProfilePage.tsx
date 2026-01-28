@@ -4,14 +4,19 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { candidateApi } from '../api/candidates';
 import { Candidate, CandidateDocument, CandidateStatus, DocumentType } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const WORKFLOW_TRANSITIONS: Record<CandidateStatus, CandidateStatus[]> = {
-  APPLIED: ['SHORTLISTED', 'REJECTED'],
-  SHORTLISTED: ['INTERVIEW_SCHEDULED', 'REJECTED'],
-  INTERVIEW_SCHEDULED: ['SELECTED', 'REJECTED'],
-  SELECTED: ['MEDICAL_IN_PROGRESS', 'REJECTED'],
-  MEDICAL_IN_PROGRESS: ['MEDICAL_CLEARED', 'REJECTED'],
-  MEDICAL_CLEARED: ['DEPLOYED', 'REJECTED'],
+  APPLIED: ['DOCUMENTS_PENDING', 'DOCUMENTS_UNDER_REVIEW', 'REJECTED', 'WITHDRAWN'],
+  DOCUMENTS_PENDING: ['DOCUMENTS_UNDER_REVIEW', 'REJECTED', 'WITHDRAWN'],
+  DOCUMENTS_UNDER_REVIEW: ['DOCUMENTS_APPROVED', 'DOCUMENTS_PENDING', 'REJECTED', 'WITHDRAWN'],
+  DOCUMENTS_APPROVED: ['INTERVIEW_SCHEDULED', 'MEDICAL_IN_PROGRESS', 'REJECTED', 'WITHDRAWN'],
+  INTERVIEW_SCHEDULED: ['INTERVIEW_COMPLETED', 'REJECTED', 'WITHDRAWN'],
+  INTERVIEW_COMPLETED: ['MEDICAL_IN_PROGRESS', 'REJECTED', 'WITHDRAWN'],
+  MEDICAL_IN_PROGRESS: ['MEDICAL_PASSED', 'REJECTED', 'WITHDRAWN'],
+  MEDICAL_PASSED: ['OFFER_ISSUED', 'REJECTED', 'WITHDRAWN'],
+  OFFER_ISSUED: ['OFFER_SIGNED', 'REJECTED', 'WITHDRAWN'],
+  OFFER_SIGNED: ['DEPLOYED', 'WITHDRAWN'],
   DEPLOYED: ['PLACED', 'WITHDRAWN'],
   PLACED: [],
   REJECTED: [],
@@ -23,6 +28,7 @@ const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRAC
 export const CandidateProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [documents, setDocuments] = useState<CandidateDocument[]>([]);
@@ -42,12 +48,29 @@ export const CandidateProfilePage: React.FC = () => {
   const [transitioning, setTransitioning] = useState(false);
   const [transitionError, setTransitionError] = useState('');
 
+  // Interview scheduling state
+  const [interviewDate, setInterviewDate] = useState('');
+  const [interviewTime, setInterviewTime] = useState('');
+  const [interviewLocation, setInterviewLocation] = useState('');
+  const [interviewNotes, setInterviewNotes] = useState('');
+  const [savingInterview, setSavingInterview] = useState(false);
+
   useEffect(() => {
     if (id) {
       loadCandidate(parseInt(id));
       loadDocuments(parseInt(id));
     }
   }, [id]);
+
+  useEffect(() => {
+    // Populate interview fields when candidate data loads
+    if (candidate) {
+      setInterviewDate(candidate.interviewDate || '');
+      setInterviewTime(candidate.interviewTime || '');
+      setInterviewLocation(candidate.interviewLocation || '');
+      setInterviewNotes(candidate.interviewNotes || '');
+    }
+  }, [candidate]);
 
   const loadCandidate = async (candidateId: number) => {
     try {
@@ -135,6 +158,45 @@ export const CandidateProfilePage: React.FC = () => {
       document.body.removeChild(a);
     } catch (err: any) {
       alert('Failed to download document');
+    }
+  };
+
+  const handleDeleteDocument = async (docId: number, fileName: string) => {
+    if (!confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await candidateApi.deleteDocument(docId);
+      // Reload documents after successful deletion
+      if (id) {
+        loadDocuments(parseInt(id));
+      }
+      alert('Document deleted successfully!');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete document');
+    }
+  };
+
+  const handleSaveInterview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+
+    setSavingInterview(true);
+
+    try {
+      const updated = await candidateApi.update(parseInt(id), {
+        interviewDate: interviewDate || undefined,
+        interviewTime: interviewTime || undefined,
+        interviewLocation: interviewLocation || undefined,
+        interviewNotes: interviewNotes || undefined,
+      });
+      setCandidate(updated);
+      alert('Interview details saved successfully!');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to save interview details');
+    } finally {
+      setSavingInterview(false);
     }
   };
 
@@ -330,17 +392,105 @@ export const CandidateProfilePage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDownloadDocument(doc.id, doc.fileName)}
-                        className="ml-4 text-sm text-primary-600 hover:text-primary-800"
-                      >
-                        Download
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleDownloadDocument(doc.id, doc.fileName)}
+                          className="text-sm text-primary-600 hover:text-primary-800"
+                        >
+                          Download
+                        </button>
+                        {user?.role === 'SUPER_ADMIN' && (
+                          <button
+                            onClick={() => handleDeleteDocument(doc.id, doc.fileName)}
+                            className="text-sm text-red-600 hover:text-red-800"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
               </div>
             </div>
+
+            {/* Interview Scheduling Section - Only show when status is DOCUMENTS_APPROVED or later */}
+            {(candidate.currentStatus === 'DOCUMENTS_APPROVED' || 
+              candidate.currentStatus === 'INTERVIEW_SCHEDULED' || 
+              candidate.currentStatus === 'INTERVIEW_COMPLETED' ||
+              ['MEDICAL_IN_PROGRESS', 'MEDICAL_PASSED', 'OFFER_ISSUED', 'OFFER_SIGNED', 'DEPLOYED', 'PLACED'].includes(candidate.currentStatus)) && (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Interview Scheduling</h2>
+                
+                <form onSubmit={handleSaveInterview}>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Interview Date</label>
+                      <input
+                        type="date"
+                        value={interviewDate}
+                        onChange={(e) => setInterviewDate(e.target.value)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Interview Time</label>
+                      <input
+                        type="time"
+                        value={interviewTime}
+                        onChange={(e) => setInterviewTime(e.target.value)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">Interview Location</label>
+                      <input
+                        type="text"
+                        value={interviewLocation}
+                        placeholder="e.g., Conference Room A, 123 Main St, or Zoom Meeting"
+                        onChange={(e) => setInterviewLocation(e.target.value)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">Interview Notes</label>
+                      <textarea
+                        value={interviewNotes}
+                        onChange={(e) => setInterviewNotes(e.target.value)}
+                        rows={3}
+                        placeholder="Additional details, instructions, or meeting link..."
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <button
+                      type="submit"
+                      disabled={savingInterview}
+                      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                    >
+                      {savingInterview ? 'Saving...' : 'Save Interview Details'}
+                    </button>
+                  </div>
+                </form>
+
+                {candidate.interviewDate && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 className="text-sm font-medium text-blue-900 mb-2">Scheduled Interview</h3>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p><strong>Date:</strong> {new Date(candidate.interviewDate).toLocaleDateString()}</p>
+                      {candidate.interviewTime && <p><strong>Time:</strong> {candidate.interviewTime}</p>}
+                      {candidate.interviewLocation && <p><strong>Location:</strong> {candidate.interviewLocation}</p>}
+                      {candidate.interviewNotes && <p><strong>Notes:</strong> {candidate.interviewNotes}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Workflow */}

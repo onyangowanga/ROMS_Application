@@ -8,6 +8,7 @@ import com.roms.enums.CandidateStatus;
 import com.roms.enums.JobOrderStatus;
 import com.roms.enums.MedicalStatus;
 import com.roms.enums.UserRole;
+import com.roms.repository.CandidateDocumentRepository;
 import com.roms.repository.CandidateRepository;
 import com.roms.repository.JobOrderRepository;
 import com.roms.repository.UserRepository;
@@ -30,6 +31,9 @@ public class JobApplicationService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CandidateDocumentRepository documentRepository;
 
     @Transactional
     public Candidate applyForJob(JobApplicationRequest request) {
@@ -91,6 +95,39 @@ public class JobApplicationService {
                 .expectedPosition(request.getExpectedPosition())
                 .build();
 
+        // Save candidate first to get ID
+        candidate = candidateRepository.save(candidate);
+
+        // Auto-check for required documents and set appropriate status
+        CandidateStatus initialStatus = determineInitialStatus(candidate);
+        candidate.setCurrentStatus(initialStatus);
+
         return candidateRepository.save(candidate);
+    }
+
+    /**
+     * Determine initial status based on uploaded documents
+     */
+    private CandidateStatus determineInitialStatus(Candidate candidate) {
+        // Check if all required documents are present
+        boolean hasPassport = documentRepository
+            .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.PASSPORT)
+            .isPresent();
+        
+        boolean hasPhoto = documentRepository
+            .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.PASSPORT)
+            .isPresent();
+        
+        boolean hasCV = documentRepository
+            .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.CV)
+            .isPresent();
+
+        // If all required documents are present, set to DOCUMENTS_UNDER_REVIEW
+        if (hasPassport && hasPhoto && hasCV) {
+            return CandidateStatus.DOCUMENTS_UNDER_REVIEW;
+        }
+
+        // Otherwise, set to DOCUMENTS_PENDING
+        return CandidateStatus.DOCUMENTS_PENDING;
     }
 }

@@ -26,5 +26,9 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
     @Query("SELECT c FROM Candidate c WHERE c.jobOrder.id = :jobOrderId AND c.deletedAt IS NULL")
     List<Candidate> findByJobOrderId(@Param("jobOrderId") Long jobOrderId);
     
+    Optional<Candidate> findByEmailAndDeletedAtIsNull(String email);
+    
+    List<Candidate> findAllByEmailAndDeletedAtIsNull(String email);
+    
     boolean existsByPassportNoAndDeletedAtIsNull(String passportNo);
 }

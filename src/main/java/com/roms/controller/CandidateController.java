@@ -53,6 +53,13 @@ public class CandidateController {
         return ResponseEntity.ok(ApiResponse.success("Candidates retrieved successfully", candidates));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('APPLICANT')")
+    public ResponseEntity<?> getMyApplications(@RequestParam String email) {
+        List<Candidate> candidates = candidateRepository.findAllByEmailAndDeletedAtIsNull(email);
+        return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", candidates));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER')")
     public ResponseEntity<?> getCandidateById(@PathVariable Long id) {
@@ -82,14 +89,39 @@ public class CandidateController {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidate not found with id: " + id));
 
-        // Update fields
-        candidate.setFirstName(candidateDetails.getFirstName());
-        candidate.setMiddleName(candidateDetails.getMiddleName());
-        candidate.setLastName(candidateDetails.getLastName());
-        candidate.setEmail(candidateDetails.getEmail());
-        candidate.setPhoneNumber(candidateDetails.getPhoneNumber());
-        candidate.setAddress(candidateDetails.getAddress());
-        // Add more fields as needed
+        // Update basic fields
+        if (candidateDetails.getFirstName() != null) {
+            candidate.setFirstName(candidateDetails.getFirstName());
+        }
+        if (candidateDetails.getMiddleName() != null) {
+            candidate.setMiddleName(candidateDetails.getMiddleName());
+        }
+        if (candidateDetails.getLastName() != null) {
+            candidate.setLastName(candidateDetails.getLastName());
+        }
+        if (candidateDetails.getEmail() != null) {
+            candidate.setEmail(candidateDetails.getEmail());
+        }
+        if (candidateDetails.getPhoneNumber() != null) {
+            candidate.setPhoneNumber(candidateDetails.getPhoneNumber());
+        }
+        if (candidateDetails.getAddress() != null) {
+            candidate.setAddress(candidateDetails.getAddress());
+        }
+        
+        // Update interview fields
+        if (candidateDetails.getInterviewDate() != null) {
+            candidate.setInterviewDate(candidateDetails.getInterviewDate());
+        }
+        if (candidateDetails.getInterviewTime() != null) {
+            candidate.setInterviewTime(candidateDetails.getInterviewTime());
+        }
+        if (candidateDetails.getInterviewLocation() != null) {
+            candidate.setInterviewLocation(candidateDetails.getInterviewLocation());
+        }
+        if (candidateDetails.getInterviewNotes() != null) {
+            candidate.setInterviewNotes(candidateDetails.getInterviewNotes());
+        }
 
         Candidate updatedCandidate = candidateRepository.save(candidate);
         return ResponseEntity.ok(ApiResponse.success("Candidate updated successfully", updatedCandidate));

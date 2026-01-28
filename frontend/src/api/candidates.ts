@@ -7,6 +7,13 @@ export const candidateApi = {
     return response.data.data || [];
   },
 
+  getMyApplications: async (email: string): Promise<Candidate[]> => {
+    const response = await api.get<ApiResponse<Candidate[]>>('/api/candidates/me', {
+      params: { email }
+    });
+    return response.data.data || [];
+  },
+
   getById: async (id: number): Promise<Candidate> => {
     const response = await api.get<ApiResponse<Candidate>>(`/api/candidates/${id}`);
     return response.data.data;
@@ -23,8 +30,8 @@ export const candidateApi = {
   },
 
   transition: async (id: number, toStatus: CandidateStatus): Promise<Candidate> => {
-    const response = await api.post<ApiResponse<Candidate>>(`/api/candidates/${id}/transition`, null, {
-      params: { toStatus }
+    const response = await api.post<ApiResponse<Candidate>>(`/api/candidates/${id}/transition`, {
+      status: toStatus
     });
     return response.data.data;
   },

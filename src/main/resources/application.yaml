@@ -37,11 +37,13 @@ google:
   drive:
     application-name: ROMS-Document-Management
     credentials-file-path: ${GOOGLE_CREDENTIALS_PATH:credentials.json}
-    folder-id: ${GOOGLE_DRIVE_FOLDER_ID:} # Root folder ID for documents
+    folder-id: 14gR2AThIrJKL3pNO8EZONmcEj__HAPil # Root folder ID for documents
     shared-link-duration: 300 # 5 minutes in seconds
 
 # Application Settings
 roms:
+  storage:
+    mode: local # Options: 'local' for development, 'cloud' for Google Drive
   passport:
     min-validity-months: 6
   document:

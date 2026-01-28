@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { employersApi } from '../api/employers';
 import { Employer } from '../types';
 
 const EmployersPage: React.FC = () => {
+  const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -14,10 +16,17 @@ const EmployersPage: React.FC = () => {
   const fetchEmployers = async () => {
     try {
       setLoading(true);
+      setError('');
+      console.log('Fetching employers...');
       const data = await employersApi.getAllEmployers();
-      setEmployers(data);
+      console.log('Employers data received:', data);
+      console.log('Is array?', Array.isArray(data));
+      console.log('Length:', data?.length);
+      setEmployers(data || []);
     } catch (err: any) {
+      console.error('Error fetching employers:', err);
       setError(err.response?.data?.message || 'Failed to load employers');
+      setEmployers([]);
     } finally {
       setLoading(false);
     }
@@ -40,9 +49,20 @@ const EmployersPage: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="px-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Employers</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="ml-2">Back</span>
+          </button>
+          <h1 className="text-3xl font-bold text-gray-800">Employers</h1>
+        </div>
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">

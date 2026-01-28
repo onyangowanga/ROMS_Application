@@ -103,6 +103,19 @@ public class Candidate extends BaseAuditEntity {
     @Column(name = "expiry_flag", length = 20)
     private String expiryFlag; // EXPIRING_SOON, EXPIRED, VALID
 
+    // Interview scheduling fields
+    @Column(name = "interview_date")
+    private LocalDate interviewDate;
+
+    @Column(name = "interview_time", length = 10)
+    private String interviewTime;
+
+    @Column(name = "interview_location", length = 500)
+    private String interviewLocation;
+
+    @Column(name = "interview_notes", length = 1000)
+    private String interviewNotes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_order_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "employer", "candidates"})

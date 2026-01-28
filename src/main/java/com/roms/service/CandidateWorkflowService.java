@@ -67,23 +67,47 @@ public class CandidateWorkflowService {
             throw new WorkflowException("Cannot transition from terminal status: " + from);
         }
 
-        // Define valid transitions
+        // Define valid transitions for 14-stage workflow
         switch (to) {
-            case DOCS_SUBMITTED:
+            case DOCUMENTS_PENDING:
                 if (from != CandidateStatus.APPLIED) {
-                    throw new WorkflowException("Can only submit documents from APPLIED status");
+                    throw new WorkflowException("Can only set DOCUMENTS_PENDING from APPLIED status");
                 }
                 break;
 
-            case INTERVIEWED:
-                if (from != CandidateStatus.DOCS_SUBMITTED) {
-                    throw new WorkflowException("Can only interview after documents are submitted");
+            case DOCUMENTS_UNDER_REVIEW:
+                if (from != CandidateStatus.APPLIED && from != CandidateStatus.DOCUMENTS_PENDING) {
+                    throw new WorkflowException("Can only review documents from APPLIED or DOCUMENTS_PENDING status");
+                }
+                break;
+
+            case DOCUMENTS_APPROVED:
+                if (from != CandidateStatus.DOCUMENTS_UNDER_REVIEW) {
+                    throw new WorkflowException("Can only approve documents after review");
+                }
+                break;
+
+            case INTERVIEW_SCHEDULED:
+                if (from != CandidateStatus.DOCUMENTS_APPROVED) {
+                    throw new WorkflowException("Can only schedule interview after documents are approved");
+                }
+                break;
+
+            case INTERVIEW_COMPLETED:
+                if (from != CandidateStatus.INTERVIEW_SCHEDULED) {
+                    throw new WorkflowException("Can only complete interview after it's scheduled");
+                }
+                break;
+
+            case MEDICAL_IN_PROGRESS:
+                if (from != CandidateStatus.INTERVIEW_COMPLETED) {
+                    throw new WorkflowException("Can only start medical process after interview completion");
                 }
                 break;
 
             case MEDICAL_PASSED:
-                if (from != CandidateStatus.INTERVIEWED) {
-                    throw new WorkflowException("Can only pass medical after interview");
+                if (from != CandidateStatus.MEDICAL_IN_PROGRESS) {
+                    throw new WorkflowException("Can only pass medical from MEDICAL_IN_PROGRESS status");
                 }
                 break;
 
@@ -93,15 +117,21 @@ public class CandidateWorkflowService {
                 }
                 break;
 
-            case OFFER_ACCEPTED:
+            case OFFER_SIGNED:
                 if (from != CandidateStatus.OFFER_ISSUED) {
-                    throw new WorkflowException("Can only accept offer after it's issued");
+                    throw new WorkflowException("Can only sign offer after it's issued");
+                }
+                break;
+
+            case DEPLOYED:
+                if (from != CandidateStatus.OFFER_SIGNED) {
+                    throw new WorkflowException("Can only deploy after offer is signed");
                 }
                 break;
 
             case PLACED:
-                if (from != CandidateStatus.OFFER_ACCEPTED) {
-                    throw new WorkflowException("Can only place candidate after offer acceptance");
+                if (from != CandidateStatus.DEPLOYED) {
+                    throw new WorkflowException("Can only place candidate after deployment");
                 }
                 break;
 
@@ -120,10 +150,30 @@ public class CandidateWorkflowService {
      */
     private void applyGuardLogic(Candidate candidate, CandidateStatus newStatus) {
         switch (newStatus) {
-            case MEDICAL_PASSED:
-                // Document Rule: Passport must be valid for at least 6 months
+            case DOCUMENTS_UNDER_REVIEW:
+                // Ensure required documents are uploaded
+                validateRequiredDocuments(candidate);
+                break;
+
+            case DOCUMENTS_APPROVED:
+                // Ensure passport validity before approval
                 validatePassportValidity(candidate);
-                // Set medical status
+                break;
+
+            case INTERVIEW_SCHEDULED:
+                // Ensure interview details are set
+                if (candidate.getInterviewDate() == null) {
+                    throw new WorkflowException("Cannot schedule interview: Interview date is required");
+                }
+                break;
+
+            case MEDICAL_IN_PROGRESS:
+                // Set medical status to in progress
+                candidate.setMedicalStatus(MedicalStatus.PENDING);
+                break;
+
+            case MEDICAL_PASSED:
+                // Set medical status to passed
                 candidate.setMedicalStatus(MedicalStatus.PASSED);
                 break;
 
@@ -145,6 +195,28 @@ public class CandidateWorkflowService {
 
             default:
                 break;
+        }
+    }
+
+    /**
+     * Validate required documents are uploaded
+     */
+    private void validateRequiredDocuments(Candidate candidate) {
+        // Check for essential documents
+        DocumentType[] requiredDocs = {
+            DocumentType.PASSPORT,
+            DocumentType.CV
+        };
+
+        for (DocumentType docType : requiredDocs) {
+            Optional<CandidateDocument> doc = documentRepository
+                .findByCandidateIdAndDocType(candidate.getId(), docType);
+            
+            if (doc.isEmpty()) {
+                throw new WorkflowException(
+                    "Cannot review documents: Missing required document - " + docType
+                );
+            }
         }
     }
 

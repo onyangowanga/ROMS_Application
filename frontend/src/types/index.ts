@@ -24,11 +24,15 @@ export interface AuthResponse {
 // Candidate Types
 export type CandidateStatus = 
   | 'APPLIED'
-  | 'SHORTLISTED'
+  | 'DOCUMENTS_PENDING'
+  | 'DOCUMENTS_UNDER_REVIEW'
+  | 'DOCUMENTS_APPROVED'
   | 'INTERVIEW_SCHEDULED'
-  | 'SELECTED'
+  | 'INTERVIEW_COMPLETED'
   | 'MEDICAL_IN_PROGRESS'
-  | 'MEDICAL_CLEARED'
+  | 'MEDICAL_PASSED'
+  | 'OFFER_ISSUED'
+  | 'OFFER_SIGNED'
   | 'DEPLOYED'
   | 'PLACED'
   | 'REJECTED'
@@ -56,6 +60,11 @@ export interface Candidate {
   expectedPosition?: string;
   expiryFlag?: 'EXPIRING_SOON' | 'EXPIRED' | 'VALID';
   medicalExpiry?: string;
+  interviewDate?: string;
+  interviewTime?: string;
+  interviewLocation?: string;
+  interviewNotes?: string;
+  jobOrder?: any;
   createdAt?: string;
   updatedAt?: string;
 }

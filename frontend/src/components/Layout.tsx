@@ -13,6 +13,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const canAccessCandidates = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER']);
   const canAccessEmployers = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF']);
+  const canAccessUsers = hasRole(['SUPER_ADMIN']);
   const isApplicant = user?.role === 'APPLICANT';
 
   return (
@@ -23,15 +24,22 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-primary-700">ROMS</h1>
+                <Link to={isApplicant ? "/my-application" : "/dashboard"} className="flex items-center">
+                  <h1 className="text-xl font-bold text-primary-700">ROMS</h1>
+                </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  to="/dashboard"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
+                {!isApplicant && (
+                  <Link
+                    to="/dashboard"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Home
+                  </Link>
+                )}
                 {isApplicant && (
                   <Link
                     to="/my-application"
@@ -62,6 +70,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                   >
                     Jobs
+                  </Link>
+                )}
+                {canAccessUsers && (
+                  <Link
+                    to="/users"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    Users
                   </Link>
                 )}
               </div>

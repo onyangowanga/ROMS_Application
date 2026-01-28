@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { candidateApi } from '../api/candidates';
-import { Candidate } from '../types';
+import { Candidate, CandidateStatus } from '../types';
 
 export const CandidatesPage: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CandidateStatus | 'ALL'>('ALL');
 
   useEffect(() => {
     loadCandidates();
@@ -43,15 +45,69 @@ export const CandidatesPage: React.FC = () => {
     );
   }
 
+  // Filter candidates based on search query and status
+  const filteredCandidates = candidates.filter((candidate) => {
+    const matchesSearch = 
+      `${candidate.firstName} ${candidate.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      candidate.internalRefNo.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'ALL' || candidate.currentStatus === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <Layout>
-      <div className="px-4 py-6 sm:px-0">
+      <div className="px-8 py-6 sm:px-8">
         <div className="sm:flex sm:items-center sm:justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Candidates</h1>
           <div className="mt-3 sm:mt-0 sm:ml-4">
             <span className="text-sm text-gray-500">
-              Total: {candidates.length}
+              Total: {filteredCandidates.length} of {candidates.length}
             </span>
+          </div>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name or ref no..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 border"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as CandidateStatus | 'ALL')}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 border"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="APPLIED">Applied</option>
+              <option value="SHORTLISTED">Shortlisted</option>
+              <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+              <option value="SELECTED">Selected</option>
+              <option value="MEDICAL_IN_PROGRESS">Medical In Progress</option>
+              <option value="MEDICAL_CLEARED">Medical Cleared</option>
+              <option value="DEPLOYED">Deployed</option>
+              <option value="PLACED">Placed</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="WITHDRAWN">Withdrawn</option>
+            </select>
           </div>
         </div>
 
@@ -81,7 +137,7 @@ export const CandidatesPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {candidates.map((candidate) => (
+              {filteredCandidates.map((candidate) => (
                 <tr key={candidate.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {candidate.internalRefNo}
@@ -111,9 +167,9 @@ export const CandidatesPage: React.FC = () => {
             </tbody>
           </table>
 
-          {candidates.length === 0 && (
+          {filteredCandidates.length === 0 && (
             <div className="text-center py-12 text-gray-500">
-              No candidates found
+              {searchQuery || statusFilter !== 'ALL' ? 'No candidates match your filters' : 'No candidates found'}
             </div>
           )}
         </div>

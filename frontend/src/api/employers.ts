@@ -20,11 +20,14 @@ export const employersApi = {
 
   getAllEmployers: async (): Promise<Employer[]> => {
     const response = await api.get('/api/employers');
-    return response.data;
+    console.log('Raw response:', response);
+    console.log('response.data:', response.data);
+    console.log('response.data.data:', response.data.data);
+    return response.data.data;
   },
 
   getEmployerById: async (id: number): Promise<Employer> => {
     const response = await api.get(`/api/employers/${id}`);
-    return response.data;
+    return response.data.data;
   }
 };

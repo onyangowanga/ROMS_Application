@@ -64,11 +64,11 @@ public class EmployerController {
 
             userRepository.save(user);
 
-            // Create employer record
+            // Create employer record (use same email as user account for matching)
             Employer employer = Employer.builder()
                     .companyName(request.getCompanyName())
                     .contactPerson(request.getContactPerson())
-                    .contactEmail(request.getContactEmail())
+                    .contactEmail(request.getEmail()) // Use same email as user account
                     .contactPhone(request.getContactPhone())
                     .address(request.getAddress())
                     .country(request.getCountry())

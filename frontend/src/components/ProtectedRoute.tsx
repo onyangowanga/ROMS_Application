@@ -24,11 +24,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-600">Access Denied - Insufficient Permissions</div>
-      </div>
-    );
+    // Redirect applicants to their application page, others to dashboard
+    const redirectPath = user.role === 'APPLICANT' ? '/my-application' : '/dashboard';
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;

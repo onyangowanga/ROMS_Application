@@ -106,13 +106,21 @@ public class DocumentController {
     }
 
     @GetMapping("/candidates/{candidateId}/documents")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER')")
-    public ResponseEntity<?> getCandidateDocuments(@PathVariable Long candidateId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER', 'APPLICANT')")
+    public ResponseEntity<?> getCandidateDocuments(@PathVariable Long candidateId, Authentication authentication) {
         
         // Validate candidate exists
-        if (!candidateRepository.existsById(candidateId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Candidate not found"));
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found with id: " + candidateId));
+
+        // Security check: If user is APPLICANT, ensure they own this candidate record
+        if (authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
+            String username = authentication.getName();
+            if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("You can only view documents for your own application"));
+            }
         }
 
         List<CandidateDocument> documents = documentRepository.findByCandidateId(candidateId);  // Use existing method
@@ -120,13 +128,24 @@ public class DocumentController {
     }
 
     @GetMapping("/documents/{documentId}/download")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF')")
-    public ResponseEntity<?> downloadDocument(@PathVariable Long documentId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'APPLICANT')")
+    public ResponseEntity<?> downloadDocument(@PathVariable Long documentId, Authentication authentication) {
         
         try {
             // Get document metadata
             CandidateDocument document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Document not found"));
+
+            // Security check: If user is APPLICANT, ensure they own this document
+            if (authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
+                String username = authentication.getName();
+                Candidate candidate = document.getCandidate();
+                if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(ApiResponse.error("You can only download your own documents"));
+                }
+            }
 
             // Download from Google Drive (backend streams file - no direct Drive URLs exposed)
             InputStream inputStream = driveService.downloadFile(document.getDriveFileId());
@@ -160,10 +179,14 @@ public class DocumentController {
             CandidateDocument document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Document not found"));
 
-            // Delete from Google Drive
-            driveService.deleteFile(document.getDriveFileId());
+            // Delete from storage (Google Drive or local)
+            if (localFileStorageService != null) {
+                localFileStorageService.deleteFile(document.getDriveFileId());
+            } else {
+                driveService.deleteFile(document.getDriveFileId());
+            }
 
-            // Soft delete from database
+            // Delete from database
             documentRepository.delete(document);
 
             return ResponseEntity.ok(ApiResponse.success("Document deleted successfully", null));

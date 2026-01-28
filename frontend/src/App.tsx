@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleBasedRedirect } from './components/RoleBasedRedirect';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CandidatesPage } from './pages/CandidatesPage';
@@ -12,6 +13,7 @@ import EmployersPage from './pages/EmployersPage';
 import JobsPage from './pages/JobsPage';
 import JobNewPage from './pages/JobNewPage';
 import MyApplicationPage from './pages/MyApplicationPage';
+import { UsersPage } from './pages/UsersPage';
 import './index.css';
 
 function App() {
@@ -26,7 +28,7 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER', 'EMPLOYER']}>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -78,6 +80,15 @@ function App() {
           />
           
           <Route
+            path="/users"
+            element={
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
             path="/my-application"
             element={
               <ProtectedRoute allowedRoles={['APPLICANT']}>
@@ -86,8 +97,8 @@ function App() {
             }
           />
           
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<RoleBasedRedirect />} />
+          <Route path="*" element={<RoleBasedRedirect />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -22,7 +22,13 @@ export const LoginPage: React.FC = () => {
       console.log('Login response:', response);
       console.log('User object:', response.user);
       login(response.accessToken, response.refreshToken, response.user);
-      navigate('/dashboard');
+      
+      // Redirect based on user role
+      if (response.user.role === 'APPLICANT') {
+        navigate('/my-application');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       console.error('Error response:', err.response?.data);
@@ -98,8 +104,9 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="text-sm text-center text-gray-600">
-            <p>Demo Credentials:</p>
+            <p>Admin Credentials:</p>
             <p className="font-mono text-xs mt-1">admin / password123</p>
+            <p className="text-xs mt-2 text-gray-500">Super admin can create other users after login</p>
           </div>
 
           <div className="mt-4 text-center">

@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { jobsApi } from '../api/jobs';
 import { JobOrder } from '../types';
 import { useAuth } from '../context/AuthContext';
+import JobEditModal from '../components/JobEditModal';
 
 const JobsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingJob, setEditingJob] = useState<JobOrder | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -48,6 +52,32 @@ const JobsPage: React.FC = () => {
     }
   };
 
+  const handleEdit = (job: JobOrder) => {
+    setEditingJob(job);
+  };
+
+  const handleSaveEdit = async (id: number, data: Partial<JobOrder>) => {
+    try {
+      await jobsApi.updateJob(id, data);
+      setEditingJob(null);
+      fetchJobs();
+      alert('Job order updated successfully');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update job order');
+    }
+  };
+
+  const handleDelete = async (jobId: number) => {
+    try {
+      await jobsApi.deleteJob(jobId);
+      setShowDeleteConfirm(null);
+      fetchJobs();
+      alert('Job order deleted successfully');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete job order');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const colors: { [key: string]: string } = {
       'PENDING_APPROVAL': 'bg-yellow-100 text-yellow-800',
@@ -77,9 +107,20 @@ const JobsPage: React.FC = () => {
   const canApprove = user?.role === 'SUPER_ADMIN';
 
   return (
-    <div>
+    <div className="px-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Job Orders</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="ml-2">Back</span>
+          </button>
+          <h1 className="text-3xl font-bold text-gray-800">Job Orders</h1>
+        </div>
         {canCreateJob && (
           <Link
             to="/jobs/new"
@@ -159,22 +200,38 @@ const JobsPage: React.FC = () => {
                   </td>
                   {canApprove && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {job.status === 'PENDING_APPROVAL' && (
+                      <div className="flex flex-col gap-2">
+                        {job.status === 'PENDING_APPROVAL' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApprove(job.id)}
+                              className="text-green-600 hover:text-green-900 font-medium"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(job.id)}
+                              className="text-red-600 hover:text-red-900 font-medium"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleApprove(job.id)}
-                            className="text-green-600 hover:text-green-900"
+                            onClick={() => handleEdit(job)}
+                            className="text-blue-600 hover:text-blue-900 font-medium"
                           >
-                            Approve
+                            Edit
                           </button>
                           <button
-                            onClick={() => handleReject(job.id)}
-                            className="text-red-600 hover:text-red-900"
+                            onClick={() => setShowDeleteConfirm(job.id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
                           >
-                            Reject
+                            Delete
                           </button>
                         </div>
-                      )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -183,6 +240,54 @@ const JobsPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Edit Modal */}
+      {editingJob && (
+        <JobEditModal
+          job={editingJob}
+          isOpen={true}
+          onClose={() => setEditingJob(null)}
+          onSave={handleSaveEdit}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-1/3 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto">
+                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg leading-6 font-medium text-gray-900 text-center mt-4">
+                Delete Job Order
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500 text-center">
+                  Are you sure you want to delete this job order? This action cannot be undone.
+                  All associated candidates will be unaffected but will no longer be linked to this job.
+                </p>
+              </div>
+              <div className="flex gap-3 px-4 py-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(showDeleteConfirm)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
