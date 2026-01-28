@@ -58,7 +58,8 @@ public class DocumentController {
             if (authentication.getAuthorities().stream()
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
                 String username = authentication.getName();
-                if (candidate.getUser() == null || !candidate.getUser().getUsername().equals(username)) {
+                // Check if the candidate's email matches the logged-in user's username
+                if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(ApiResponse.error("You can only upload documents to your own application"));
                 }
