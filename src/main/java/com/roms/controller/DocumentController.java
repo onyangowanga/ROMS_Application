@@ -3,9 +3,11 @@ package com.roms.controller;
 import com.roms.dto.ApiResponse;
 import com.roms.entity.Candidate;
 import com.roms.entity.CandidateDocument;
+import com.roms.entity.User;
 import com.roms.enums.DocumentType;
 import com.roms.repository.CandidateDocumentRepository;
 import com.roms.repository.CandidateRepository;
+import com.roms.repository.UserRepository;
 import com.roms.service.GoogleDriveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -32,6 +35,9 @@ public class DocumentController {
 
     @Autowired
     private CandidateDocumentRepository documentRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private GoogleDriveService driveService;
@@ -40,7 +46,6 @@ public class DocumentController {
     private com.roms.service.LocalFileStorageService localFileStorageService;
 
     @PostMapping("/candidates/{candidateId}/documents")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'APPLICANT')")
     public ResponseEntity<?> uploadDocument(
             @PathVariable Long candidateId,
             @RequestParam("file") MultipartFile file,
@@ -54,29 +59,38 @@ public class DocumentController {
             Candidate candidate = candidateRepository.findById(candidateId)
                     .orElseThrow(() -> new RuntimeException("Candidate not found with id: " + candidateId));
 
-            // Security check: If user is APPLICANT, ensure they own this candidate record
-            if (authentication.getAuthorities().stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
-                String username = authentication.getName();
-                // Check if the candidate's email matches the logged-in user's username
-                if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(ApiResponse.error("You can only upload documents to your own application"));
+            // Security check: If user is authenticated and is APPLICANT, ensure they own this candidate record
+            if (authentication != null && authentication.isAuthenticated() && 
+                !"anonymousUser".equals(authentication.getPrincipal())) {
+                if (authentication.getAuthorities().stream()
+                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
+                    String username = authentication.getName();
+                    // Find the user by username and get their email
+                    Optional<User> userOpt = userRepository.findByUsername(username);
+                    if (userOpt.isPresent()) {
+                        String userEmail = userOpt.get().getEmail();
+                        // Check if the candidate's email matches the logged-in user's email
+                        if (candidate.getEmail() == null || !candidate.getEmail().equals(userEmail)) {
+                            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                    .body(ApiResponse.error("You can only upload documents to your own application"));
+                        }
+                    } else {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ApiResponse.error("User not found"));
+                    }
                 }
             }
+            // If authentication is null or anonymous, allow upload (for registration process)
 
             // Upload to Google Drive or local storage
             String driveFileId;
-            String shareableLink;
             
             if (localFileStorageService != null) {
                 // Use local file storage for development
                 driveFileId = localFileStorageService.storeFile(file);
-                shareableLink = localFileStorageService.generateShareableLink(driveFileId);
             } else {
                 // Use Google Drive
                 driveFileId = driveService.uploadFile(file, null);
-                shareableLink = driveService.generateShareableLink(driveFileId);
             }
 
             // Create document metadata
@@ -117,9 +131,17 @@ public class DocumentController {
         if (authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
             String username = authentication.getName();
-            if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
+            // Find the user by username and get their email
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent()) {
+                String userEmail = userOpt.get().getEmail();
+                if (candidate.getEmail() == null || !candidate.getEmail().equals(userEmail)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(ApiResponse.error("You can only view documents for your own application"));
+                }
+            } else {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error("You can only view documents for your own application"));
+                        .body(ApiResponse.error("User not found"));
             }
         }
 
@@ -140,10 +162,18 @@ public class DocumentController {
             if (authentication.getAuthorities().stream()
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_APPLICANT"))) {
                 String username = authentication.getName();
-                Candidate candidate = document.getCandidate();
-                if (candidate.getEmail() == null || !candidate.getEmail().equals(username)) {
+                // Find the user by username and get their email
+                Optional<User> userOpt = userRepository.findByUsername(username);
+                if (userOpt.isPresent()) {
+                    String userEmail = userOpt.get().getEmail();
+                    Candidate candidate = document.getCandidate();
+                    if (candidate.getEmail() == null || !candidate.getEmail().equals(userEmail)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(ApiResponse.error("You can only download your own documents"));
+                    }
+                } else {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(ApiResponse.error("You can only download your own documents"));
+                            .body(ApiResponse.error("User not found"));
                 }
             }
 

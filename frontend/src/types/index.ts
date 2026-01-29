@@ -121,6 +121,7 @@ export interface WorkflowTransition {
 export interface Employer {
   id: number;
   companyName: string;
+  companyRegistrationNo?: string;
   contactPerson: string;
   contactEmail: string;
   contactPhone: string;
@@ -128,8 +129,11 @@ export interface Employer {
   country: string;
   industry: string;
   isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  createdBy?: string;
+  lastModifiedAt: string;
+  lastModifiedBy?: string;
+  deletedAt?: string;
 }
 
 // Job Order Types
@@ -153,4 +157,30 @@ export interface JobOrder {
   employerId?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+// Assignment Types
+export type AssignmentStatus = 'ASSIGNED' | 'OFFERED' | 'PLACED' | 'CANCELLED';
+
+export interface Assignment {
+  id: number;
+  candidateId: number;
+  candidateName: string;
+  candidateRefNo: string;
+  jobOrderId: number;
+  jobOrderRef: string;
+  jobTitle: string;
+  status: AssignmentStatus;
+  isActive: boolean;
+  assignedAt: string;
+  offerIssuedAt?: string;
+  placementConfirmedAt?: string;
+  cancelledAt?: string;
+  notes?: string;
+}
+
+export interface CreateAssignmentRequest {
+  candidateId: number;
+  jobOrderId: number;
+  notes?: string;
 }

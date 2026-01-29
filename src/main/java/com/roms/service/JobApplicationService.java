@@ -91,7 +91,6 @@ public class JobApplicationService {
                 .country(request.getCountry())
                 .currentStatus(CandidateStatus.APPLIED)
                 .medicalStatus(MedicalStatus.PENDING)
-                .jobOrder(jobOrder)
                 .expectedPosition(request.getExpectedPosition())
                 .build();
 

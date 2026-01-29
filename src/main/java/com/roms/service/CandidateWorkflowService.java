@@ -2,7 +2,6 @@ package com.roms.service;
 
 import com.roms.entity.Candidate;
 import com.roms.entity.CandidateDocument;
-import com.roms.entity.JobOrder;
 import com.roms.enums.CandidateStatus;
 import com.roms.enums.DocumentType;
 import com.roms.enums.MedicalStatus;
@@ -32,6 +31,9 @@ public class CandidateWorkflowService {
 
     @Autowired
     private CandidateDocumentRepository documentRepository;
+
+    @Autowired
+    private AssignmentService assignmentService;
 
     @Value("${roms.passport.min-validity-months:6}")
     private int passportMinValidityMonths;
@@ -185,12 +187,8 @@ public class CandidateWorkflowService {
                 break;
 
             case PLACED:
-                // Fulfillment Rule: Check job order capacity
-                validateJobOrderCapacity(candidate);
-                // Increment job order filled count
-                if (candidate.getJobOrder() != null) {
-                    candidate.getJobOrder().incrementFilledCount();
-                }
+                // Fulfillment Rule: Check active assignment
+                validateActiveAssignment(candidate);
                 break;
 
             default:
@@ -247,22 +245,11 @@ public class CandidateWorkflowService {
     }
 
     /**
-     * Validate job order capacity (Fulfillment Rule)
+     * Validate candidate has active assignment (Fulfillment Rule)
      */
-    private void validateJobOrderCapacity(Candidate candidate) {
-        JobOrder jobOrder = candidate.getJobOrder();
-
-        if (jobOrder == null) {
-            throw new WorkflowException("Cannot place candidate: No job order assigned");
-        }
-
-        if (jobOrder.isFilled()) {
-            throw new WorkflowException(
-                String.format("Cannot place candidate: Job order %s is already filled (%d/%d)",
-                    jobOrder.getJobOrderRef(),
-                    jobOrder.getHeadcountFilled(),
-                    jobOrder.getHeadcountRequired())
-            );
+    private void validateActiveAssignment(Candidate candidate) {
+        if (!assignmentService.hasActiveAssignment(candidate.getId())) {
+            throw new WorkflowException("Cannot place candidate: No active assignment found. Candidate must be assigned to a job order first.");
         }
     }
 

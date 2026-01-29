@@ -78,6 +78,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/candidates/apply").permitAll()  // Job application endpoint
+                .requestMatchers(HttpMethod.POST, "/api/candidates/*/documents").permitAll()  // Document upload for applicants
                 .requestMatchers("/api/employers").permitAll()  // Employer registration endpoint
                 .requestMatchers(HttpMethod.GET, "/api/job-orders").permitAll()  // Public job listings
                 .requestMatchers(HttpMethod.GET, "/api/job-orders/*").permitAll()  // Public job details

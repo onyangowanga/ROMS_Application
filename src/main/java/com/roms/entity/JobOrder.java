@@ -1,5 +1,6 @@
 package com.roms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import com.roms.enums.JobOrderStatus;
 import jakarta.persistence.*;
@@ -91,9 +92,11 @@ public class JobOrder extends BaseAuditEntity {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    // Assignments relationship (replaces direct candidates collection)
     @OneToMany(mappedBy = "jobOrder", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("jobOrder")
     @Builder.Default
-    private List<Candidate> candidates = new ArrayList<>();
+    private List<Assignment> assignments = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

@@ -116,10 +116,11 @@ public class Candidate extends BaseAuditEntity {
     @Column(name = "interview_notes", length = 1000)
     private String interviewNotes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_order_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "employer", "candidates"})
-    private JobOrder jobOrder;
+    // Assignment relationship (replaces direct jobOrder)
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("candidate")
+    @Builder.Default
+    private List<Assignment> assignments = new ArrayList<>();
 
     @Column(name = "expected_position", length = 200)
     private String expectedPosition;
@@ -140,10 +141,12 @@ public class Candidate extends BaseAuditEntity {
     private String notes;
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("candidate")
     @Builder.Default
     private List<CandidateDocument> documents = new ArrayList<>();
 
     @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("candidate")
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 

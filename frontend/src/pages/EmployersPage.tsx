@@ -20,12 +20,20 @@ const EmployersPage: React.FC = () => {
       console.log('Fetching employers...');
       const data = await employersApi.getAllEmployers();
       console.log('Employers data received:', data);
+      console.log('Type of data:', typeof data);
       console.log('Is array?', Array.isArray(data));
       console.log('Length:', data?.length);
-      setEmployers(data || []);
+      
+      if (Array.isArray(data)) {
+        setEmployers(data);
+      } else {
+        console.error('Data is not an array:', data);
+        setEmployers([]);
+      }
     } catch (err: any) {
       console.error('Error fetching employers:', err);
-      setError(err.response?.data?.message || 'Failed to load employers');
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.message || err.message || 'Failed to load employers');
       setEmployers([]);
     } finally {
       setLoading(false);

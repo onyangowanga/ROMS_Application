@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { candidateApi } from '../api/candidates';
-import { Candidate, CandidateDocument, CandidateStatus, DocumentType } from '../types';
+import { jobsApi } from '../api/jobs';
+import { assignmentsApi } from '../api/assignments';
+import { Candidate, CandidateDocument, CandidateStatus, DocumentType, Assignment, JobOrder } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 const WORKFLOW_TRANSITIONS: Record<CandidateStatus, CandidateStatus[]> = {
@@ -55,10 +57,20 @@ export const CandidateProfilePage: React.FC = () => {
   const [interviewNotes, setInterviewNotes] = useState('');
   const [savingInterview, setSavingInterview] = useState(false);
 
+  // Assignment state
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [openJobs, setOpenJobs] = useState<JobOrder[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<number | ''>('');
+  const [assignmentNotes, setAssignmentNotes] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignmentError, setAssignmentError] = useState('');
+
   useEffect(() => {
     if (id) {
       loadCandidate(parseInt(id));
       loadDocuments(parseInt(id));
+      loadAssignments(parseInt(id));
+      loadOpenJobs();
     }
   }, [id]);
 
@@ -197,6 +209,73 @@ export const CandidateProfilePage: React.FC = () => {
       alert(err.response?.data?.message || 'Failed to save interview details');
     } finally {
       setSavingInterview(false);
+    }
+  };
+
+  const loadAssignments = async (candidateId: number) => {
+    try {
+      const data = await assignmentsApi.getAssignmentsByCandidate(candidateId);
+      setAssignments(data);
+    } catch (err: any) {
+      console.error('Failed to load assignments:', err);
+    }
+  };
+
+  const loadOpenJobs = async () => {
+    try {
+      const jobs = await jobsApi.getAllJobs();
+      const openJobs = jobs.filter(job => job.status === 'OPEN');
+      setOpenJobs(openJobs);
+    } catch (err: any) {
+      console.error('Failed to load jobs:', err);
+    }
+  };
+
+  const handleCreateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJobId || !id) return;
+
+    setAssigning(true);
+    setAssignmentError('');
+
+    try {
+      await assignmentsApi.createAssignment({
+        candidateId: parseInt(id),
+        jobOrderId: Number(selectedJobId),
+        notes: assignmentNotes || undefined
+      });
+      
+      // Reload assignments and candidate
+      await loadAssignments(parseInt(id));
+      await loadCandidate(parseInt(id));
+      
+      // Reset form
+      setSelectedJobId('');
+      setAssignmentNotes('');
+      alert('Assignment created successfully!');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to create assignment';
+      setAssignmentError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleCancelAssignment = async (assignmentId: number) => {
+    if (!window.confirm('Are you sure you want to cancel this assignment?')) return;
+
+    try {
+      await assignmentsApi.cancelAssignment(assignmentId);
+      
+      // Reload assignments and candidate
+      if (id) {
+        await loadAssignments(parseInt(id));
+        await loadCandidate(parseInt(id));
+      }
+      alert('Assignment cancelled successfully!');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to cancel assignment');
     }
   };
 
@@ -491,6 +570,118 @@ export const CandidateProfilePage: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Assignment Panel - Job Order Assignment */}
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Job Order Assignment</h2>
+              
+              {/* Current Active Assignment */}
+              {assignments.filter(a => a.isActive).map((assignment) => (
+                <div key={assignment.id} className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-sm font-medium text-green-900">Active Assignment</h3>
+                      <div className="mt-2 text-sm text-green-800 space-y-1">
+                        <p><strong>Job:</strong> {assignment.jobTitle}</p>
+                        <p><strong>Ref:</strong> {assignment.jobOrderRef}</p>
+                        <p><strong>Status:</strong> {assignment.status}</p>
+                        <p><strong>Assigned:</strong> {new Date(assignment.assignedAt).toLocaleDateString()}</p>
+                        {assignment.offerIssuedAt && (
+                          <p><strong>Offer Issued:</strong> {new Date(assignment.offerIssuedAt).toLocaleDateString()}</p>
+                        )}
+                        {assignment.placementConfirmedAt && (
+                          <p><strong>Placement Confirmed:</strong> {new Date(assignment.placementConfirmedAt).toLocaleDateString()}</p>
+                        )}
+                        {assignment.notes && <p><strong>Notes:</strong> {assignment.notes}</p>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleCancelAssignment(assignment.id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Create New Assignment */}
+              {!assignments.some(a => a.isActive) && (
+                <div>
+                  {assignmentError && (
+                    <div className="mb-4 rounded-md bg-red-50 p-3">
+                      <p className="text-sm text-red-800">{assignmentError}</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreateAssignment}>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Select Open Job Order
+                        </label>
+                        <select
+                          value={selectedJobId}
+                          onChange={(e) => setSelectedJobId(e.target.value ? Number(e.target.value) : '')}
+                          required
+                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                        >
+                          <option value="">-- Select Job Order --</option>
+                          {openJobs.map((job) => (
+                            <option key={job.id} value={job.id}>
+                              {job.jobOrderRef} - {job.jobTitle} ({job.headcountFilled || 0}/{job.headcountRequired})
+                            </option>
+                          ))}
+                        </select>
+                        {openJobs.length === 0 && (
+                          <p className="mt-1 text-sm text-gray-500">No open job orders available</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Assignment Notes (Optional)
+                        </label>
+                        <textarea
+                          value={assignmentNotes}
+                          onChange={(e) => setAssignmentNotes(e.target.value)}
+                          rows={3}
+                          placeholder="Add any notes about this assignment..."
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={!selectedJobId || assigning}
+                        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                      >
+                        {assigning ? 'Creating Assignment...' : 'Assign to Job Order'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Assignment History */}
+              {assignments.filter(a => !a.isActive).length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Assignment History</h3>
+                  <div className="space-y-2">
+                    {assignments.filter(a => !a.isActive).map((assignment) => (
+                      <div key={assignment.id} className="text-sm p-3 bg-gray-50 rounded">
+                        <p className="font-medium">{assignment.jobTitle}</p>
+                        <p className="text-gray-600">{assignment.jobOrderRef} - {assignment.status}</p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          {new Date(assignment.assignedAt).toLocaleDateString()} - 
+                          {assignment.cancelledAt && ` Cancelled: ${new Date(assignment.cancelledAt).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Workflow */}

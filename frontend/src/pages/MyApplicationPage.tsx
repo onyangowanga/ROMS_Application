@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { candidateApi } from '../api/candidates';
-import { Candidate, CandidateDocument, DocumentType } from '../types';
+import { Candidate, CandidateDocument, DocumentType, CandidateStatus } from '../types';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 
@@ -39,6 +39,9 @@ const MyApplicationPage: React.FC = () => {
         return;
       }
 
+      console.log('Loading applications for user:', user);
+      console.log('User email:', user.email);
+      
       const apps = await candidateApi.getMyApplications(user.email);
       setApplications(apps);
 
@@ -54,6 +57,8 @@ const MyApplicationPage: React.FC = () => {
       }
       setDocuments(docsMap);
     } catch (err: any) {
+      console.error('Error loading applications:', err);
+      console.error('Error response:', err.response);
       if (err.response?.status === 500 || err.response?.status === 404) {
         setApplications([]);
       } else {
@@ -184,7 +189,15 @@ const MyApplicationPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h3 className="text-lg font-medium text-yellow-900 mb-2">No Applications Yet</h3>
-            <p className="text-yellow-700 mb-4">You haven't applied for any jobs. Browse available positions and submit your first application.</p>
+            <p className="text-yellow-700 mb-2">
+              No job applications found for <strong>{user?.email}</strong>.
+            </p>
+            <p className="text-yellow-700 mb-4">
+              Browse available positions and submit your first application.
+            </p>
+            <p className="text-xs text-yellow-600 mb-4">
+              (Check browser console for detailed debugging information)
+            </p>
             <button
               onClick={() => navigate('/jobs')}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
@@ -194,7 +207,9 @@ const MyApplicationPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {applications.map((app) => (
+            {applications.map((app) => {
+              try {
+                return (
               <div key={app.id} className="bg-white shadow rounded-lg overflow-hidden">
                 {/* Application Header */}
                 <div className="px-6 py-4 border-b border-gray-200">
@@ -403,7 +418,13 @@ const MyApplicationPage: React.FC = () => {
                   </div>
                 )}
               </div>
-            ))}
+            );
+              } catch (error) {
+                console.error('Error rendering application:', error);
+                console.error('App data:', app);
+                return <div key={app.id} className="bg-red-100 p-4 rounded">Error rendering application</div>;
+              }
+            })}
           </div>
         )}
       </div>

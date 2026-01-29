@@ -1,11 +1,14 @@
 package com.roms.controller;
 
 import com.roms.dto.ApiResponse;
+import com.roms.entity.Assignment;
 import com.roms.entity.Candidate;
 import com.roms.entity.Employer;
 import com.roms.entity.JobOrder;
+import com.roms.enums.AssignmentStatus;
 import com.roms.enums.CandidateStatus;
 import com.roms.enums.JobOrderStatus;
+import com.roms.repository.AssignmentRepository;
 import com.roms.repository.CandidateRepository;
 import com.roms.repository.EmployerRepository;
 import com.roms.repository.JobOrderRepository;
@@ -33,6 +36,9 @@ public class DashboardController {
 
     @Autowired
     private JobOrderRepository jobOrderRepository;
+
+    @Autowired
+    private AssignmentRepository assignmentRepository;
 
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER')")
@@ -108,21 +114,14 @@ public class DashboardController {
                     .sum();
             stats.put("pendingPositionsHeadcount", pendingPositions);
             
-            // Total applications received (count of candidates across all job orders)
-            int totalApplications = 0;
-            for (JobOrder job : allJobs) {
-                totalApplications += candidateRepository.findByJobOrderId(job.getId()).size();
-            }
+            // Total applications received (count of assignments across all job orders)
+            int totalApplications = (int) assignmentRepository.findAll().size();
             stats.put("totalApplicationsReceived", totalApplications);
             
-            // Total placed candidates
-            int totalPlaced = 0;
-            for (JobOrder job : allJobs) {
-                List<Candidate> candidates = candidateRepository.findByJobOrderId(job.getId());
-                totalPlaced += (int) candidates.stream()
-                        .filter(c -> c.getCurrentStatus() == CandidateStatus.PLACED)
-                        .count();
-            }
+            // Total placed candidates (count of PLACED assignments)
+            int totalPlaced = (int) assignmentRepository.findAll().stream()
+                    .filter(a -> a.getStatus() == AssignmentStatus.PLACED)
+                    .count();
             stats.put("totalPlaced", totalPlaced);
             
             // Filled positions (total headcount filled)

@@ -1,5 +1,6 @@
 package com.roms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import com.roms.enums.PaymentType;
 import jakarta.persistence.*;
@@ -31,6 +32,7 @@ public class Payment extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidate_id")
+    @JsonIgnoreProperties({"payments", "documents", "assignments", "hibernateLazyInitializer", "handler"})
     private Candidate candidate;
 
     @NotNull
