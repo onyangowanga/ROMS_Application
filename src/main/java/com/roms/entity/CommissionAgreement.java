@@ -80,25 +80,30 @@ public class CommissionAgreement extends BaseAuditEntity {
      * Mark agreement as signed
      */
     public void sign() {
-        if (this.status == CommissionAgreementStatus.PENDING_SIGNATURE) {
-            this.signedAt = LocalDateTime.now();
-            this.status = CommissionAgreementStatus.SIGNED;
+        if (this.status != CommissionAgreementStatus.PENDING_SIGNATURE) {
+            throw new IllegalStateException("Agreement must be in PENDING_SIGNATURE status to be signed. Current status: " + this.status);
         }
+        this.signedAt = LocalDateTime.now();
+        this.status = CommissionAgreementStatus.SIGNED;
     }
 
     /**
      * Activate the agreement
      */
     public void activate() {
-        if (this.status == CommissionAgreementStatus.SIGNED) {
-            this.status = CommissionAgreementStatus.ACTIVE;
+        if (this.status != CommissionAgreementStatus.SIGNED) {
+            throw new IllegalStateException("Agreement must be in SIGNED status to be activated. Current status: " + this.status);
         }
+        this.status = CommissionAgreementStatus.ACTIVE;
     }
 
     /**
      * Cancel the agreement
      */
     public void cancel(String reason) {
+        if (this.status == CommissionAgreementStatus.CANCELLED) {
+            throw new IllegalStateException("Agreement is already cancelled");
+        }
         this.cancelledAt = LocalDateTime.now();
         this.cancellationReason = reason;
         this.status = CommissionAgreementStatus.CANCELLED;

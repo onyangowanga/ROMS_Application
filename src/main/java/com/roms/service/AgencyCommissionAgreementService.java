@@ -102,13 +102,13 @@ public class AgencyCommissionAgreementService {
         CommissionAgreement agreement = commissionAgreementRepository.findById(agreementId)
                 .orElseThrow(() -> new RuntimeException("Commission agreement not found with id: " + agreementId));
 
-        if (agreement.getStatus() != CommissionAgreementStatus.PENDING_SIGNATURE) {
-            throw new RuntimeException("Agreement must be in PENDING_SIGNATURE status to be signed. Current status: " + agreement.getStatus());
+        try {
+            agreement.sign();
+            agreement = commissionAgreementRepository.save(agreement);
+            return toDTO(agreement);
+        } catch (IllegalStateException e) {
+            throw new RuntimeException(e.getMessage());
         }
-
-        agreement.sign();
-        agreement = commissionAgreementRepository.save(agreement);
-        return toDTO(agreement);
     }
 
     /**
@@ -119,13 +119,13 @@ public class AgencyCommissionAgreementService {
         CommissionAgreement agreement = commissionAgreementRepository.findById(agreementId)
                 .orElseThrow(() -> new RuntimeException("Commission agreement not found with id: " + agreementId));
 
-        if (agreement.getStatus() == CommissionAgreementStatus.CANCELLED) {
-            throw new RuntimeException("Agreement is already cancelled");
+        try {
+            agreement.cancel(reason);
+            agreement = commissionAgreementRepository.save(agreement);
+            return toDTO(agreement);
+        } catch (IllegalStateException e) {
+            throw new RuntimeException(e.getMessage());
         }
-
-        agreement.cancel(reason);
-        agreement = commissionAgreementRepository.save(agreement);
-        return toDTO(agreement);
     }
 
     /**
@@ -141,10 +141,14 @@ public class AgencyCommissionAgreementService {
      * Convert entity to DTO
      */
     private CommissionAgreementDTO toDTO(CommissionAgreement agreement) {
+        String firstName = agreement.getCandidate().getFirstName() != null ? agreement.getCandidate().getFirstName() : "";
+        String lastName = agreement.getCandidate().getLastName() != null ? agreement.getCandidate().getLastName() : "";
+        String candidateName = (firstName + " " + lastName).trim();
+        
         return CommissionAgreementDTO.builder()
                 .id(agreement.getId())
                 .candidateId(agreement.getCandidate().getId())
-                .candidateName(agreement.getCandidate().getFirstName() + " " + agreement.getCandidate().getLastName())
+                .candidateName(candidateName)
                 .assignmentId(agreement.getAssignment() != null ? agreement.getAssignment().getId() : null)
                 .agreementNumber(agreement.getAgreementNumber())
                 .commissionRate(agreement.getCommissionRate())
