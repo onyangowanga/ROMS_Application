@@ -1,11 +1,11 @@
 # ROMS - Recruitment Operations Management System
 
-> **Status**: Phase 1 Complete ✅ | **Version**: 1.0.0 | **Date**: January 2026
+> **Status**: Phase 2A Complete ✅ | **Version**: 2.0.0 | **Date**: January 2026
 
 ## Overview
-Enterprise-grade Recruitment Operations Management System built with modern Java stack, React frontend, and containerized PostgreSQL database.
+Enterprise-grade Recruitment Operations Management System built with modern Java stack, React frontend, and containerized PostgreSQL database. Features advanced assignment tracking, audit trails, and role-based workflow management.
 
-## 🎯 Phase 1 Complete - Production Ready
+## 🎯 Phase 2A Complete - Assignment Module Integrated
 
 ### Core Features Implemented
 ✅ **Authentication & Authorization**
@@ -21,6 +21,15 @@ Enterprise-grade Recruitment Operations Management System built with modern Java
 - Soft delete with unique constraint management (passport validation)
 - Job application workflow with position selection
 - Applicant self-service dashboard
+
+✅ **Assignment Module (Phase 2A)**
+- Many-to-many candidate-job relationships via Assignment entity
+- Assignment lifecycle: ASSIGNED → OFFERED → PLACED/CANCELLED
+- One active assignment per candidate enforcement
+- Automatic job order headcount tracking
+- Role-based assignment management (SUPER_ADMIN, OPERATIONS_STAFF)
+- PLACED assignment protection (only SUPER_ADMIN can cancel)
+- Full audit trail with Hibernate Envers
 
 ✅ **Job Order Management**
 - Job posting creation and management
@@ -62,6 +71,10 @@ Enterprise-grade Recruitment Operations Management System built with modern Java
 ✅ Document upload parameter naming fixes (docType)  
 ✅ Security enhancements for applicant document uploads  
 ✅ Session validation on page refresh  
+✅ Assignment module replaces direct candidate-job FK relationship  
+✅ Database uniqueness enforcement via partial indexes  
+✅ Enhanced status transition validation with assignment checks  
+✅ Graceful handling of duplicate active assignments  
 
 ## 🛠️ Tech Stack
 
@@ -106,6 +119,7 @@ ROMS/
 │   │   ├── AuthResponse.java
 │   │   └── LoginRequest.java
 │   ├── entity/              # JPA entities
+│   │   ├── Assignment.java      # NEW: Candidate-Job assignments
 │   │   ├── base/BaseAuditEntity.java
 │   │   ├── User.java
 │   │   ├── Candidate.java
@@ -341,6 +355,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update  # Auto-create/update tables
+    properties:
+      hibernate:
+        envers:
+          audit_table_suffix: _AUD  # Audit trail tables
     show-sql: true      # Log SQL queries
 ```
 
@@ -392,10 +410,12 @@ npm run dev
 netstat -ano | findstr :8080
 
 # Change port in application.yaml
-server.port=8081
-```
-
-## 📚 Documentation
+serveQUICKSTART.md](QUICKSTART.md)** - Detailed setup guide
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture
+- **[ASSIGNMENT_MODULE_MIGRATION.md](ASSIGNMENT_MODULE_MIGRATION.md)** - Assignment module details
+- **[FRONTEND_FEATURES.md](FRONTEND_FEATURES.md)** - Frontend capabilities
+- **[LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md)** - Testing procedures
+- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Production deployment guide
 
 - **[PHASE_1_COMPLETE.md](PHASE_1_COMPLETE.md)** - Phase 1 completion summary
 - **[QUICKSTART.md](QUICKSTART.md)** - Detailed setup guide
@@ -444,9 +464,7 @@ Proprietary - All Rights Reserved
 
 For issues or questions:
 - Check documentation in `/docs` folder
-- Review error logs in backend terminal
-- Check browser console (F12) for frontend issues
-- Review this README and QUICKSTART.md
+- Review erro2.0.0 | **Status**: Phase 2A Complete ✅ | **Last Updated**: January 29, 2026eview this README and QUICKSTART.md
 
 ---
 

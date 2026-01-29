@@ -3,12 +3,17 @@ package com.roms.controller;
 import com.roms.dto.ApiResponse;
 import com.roms.dto.AssignmentDTO;
 import com.roms.dto.CreateAssignmentRequest;
+import com.roms.entity.Assignment;
+import com.roms.enums.AssignmentStatus;
+import com.roms.repository.AssignmentRepository;
 import com.roms.service.AssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.List;
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
+    private final AssignmentRepository assignmentRepository;
 
     /**
      * Create a new assignment
@@ -83,11 +89,28 @@ public class AssignmentController {
 
     /**
      * Cancel an assignment
+     * Business Rule: PLACED assignments can only be cancelled by SUPER_ADMIN
      */
     @DeleteMapping("/{assignmentId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF')")
-    public ResponseEntity<?> cancelAssignment(@PathVariable Long assignmentId) {
+    public ResponseEntity<?> cancelAssignment(@PathVariable Long assignmentId, Authentication authentication) {
         try {
+            // Additional check for PLACED assignments
+            Assignment assignment = assignmentRepository.findById(assignmentId)
+                    .orElseThrow(() -> new RuntimeException("Assignment not found"));
+            
+            if (assignment.getStatus() == AssignmentStatus.PLACED) {
+                // Only SUPER_ADMIN can cancel PLACED assignments
+                boolean isSuperAdmin = authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .anyMatch(role -> role.equals("ROLE_SUPER_ADMIN"));
+                
+                if (!isSuperAdmin) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(ApiResponse.error("Only SUPER_ADMIN can cancel PLACED assignments"));
+                }
+            }
+            
             assignmentService.cancelAssignment(assignmentId);
             return ResponseEntity.ok(ApiResponse.success("Assignment cancelled successfully"));
         } catch (RuntimeException e) {

@@ -1,5 +1,7 @@
 # ROMS System Architecture
 
+**Version**: 2.0.0 | **Status**: Phase 2A Complete | **Last Updated**: January 29, 2026
+
 ## High-Level Architecture Diagram
 
 ```
@@ -63,7 +65,7 @@
 │  └──────────────┘  └──────────────┘  └──────────────┘              │
 │                                                                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │   Payment    │  │   Document   │  │   Employer   │              │
+│  │  Assignment  │  │   Document   │  │   Employer   │              │
 │  │  Repository  │  │  Repository  │  │  Repository  │              │
 │  └──────────────┘  └──────────────┘  └──────────────┘              │
 └───────────────────────────┼──────────────────────────────────────────┘
@@ -76,13 +78,13 @@
 │  ┌────────────────────────────────────────────────────────────┐     │
 │  │                    Main Tables                             │     │
 │  │  • users          • candidates      • job_orders          │     │
-│  │  • payments       • employers       • candidate_documents │     │
+│  │  • assignments    • employers       • candidate_documents │     │
 │  └────────────────────────────────────────────────────────────┘     │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────┐     │
 │  │              Audit Tables (Hibernate Envers)               │     │
 │  │  • users_aud      • candidates_aud  • job_orders_aud      │     │
-│  │  • payments_aud   • employers_aud   • documents_aud       │     │
+│  │  • assignments_aud • employers_aud  • documents_aud       │     │
 │  └────────────────────────────────────────────────────────────┘     │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────┐     │

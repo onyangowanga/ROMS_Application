@@ -128,6 +128,7 @@ public class AssignmentService {
 
     /**
      * Cancel an assignment
+     * Note: PLACED assignments can only be cancelled by SUPER_ADMIN (enforced at controller level)
      */
     @Transactional
     public void cancelAssignment(Long assignmentId) {
@@ -136,6 +137,13 @@ public class AssignmentService {
 
         if (!assignment.getIsActive()) {
             throw new RuntimeException("Assignment is already inactive");
+        }
+
+        // Business Rule: Prevent cancellation of PLACED assignments
+        // This is a soft check - enforcement happens at controller level with role check
+        if (assignment.getStatus() == AssignmentStatus.PLACED) {
+            System.out.println("WARNING: Cancelling PLACED assignment " + assignmentId + 
+                    ". This should only be done by SUPER_ADMIN.");
         }
 
         // Deactivate assignment
