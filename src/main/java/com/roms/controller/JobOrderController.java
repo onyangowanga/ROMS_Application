@@ -2,13 +2,18 @@ package com.roms.controller;
 
 import com.roms.dto.ApiResponse;
 import com.roms.dto.JobOrderSummaryDTO;
+import com.roms.entity.Employer;
 import com.roms.entity.JobOrder;
+import com.roms.entity.User;
 import com.roms.enums.JobOrderStatus;
+import com.roms.repository.EmployerRepository;
 import com.roms.repository.JobOrderRepository;
+import com.roms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +26,12 @@ public class JobOrderController {
 
     @Autowired
     private JobOrderRepository jobOrderRepository;
+
+    @Autowired
+    private EmployerRepository employerRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Get all job orders (accessible to all authenticated users)
@@ -49,11 +60,24 @@ public class JobOrderController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'EMPLOYER')")
-    public ResponseEntity<?> createJobOrder(@RequestBody JobOrder jobOrder) {
+    public ResponseEntity<?> createJobOrder(@RequestBody JobOrder jobOrder, Authentication authentication) {
         // Validate job order reference is unique
         if (jobOrderRepository.findByJobOrderRef(jobOrder.getJobOrderRef()).isPresent()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Job order reference already exists"));
+        }
+
+        // Get the authenticated user
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // If the user is an EMPLOYER, find their employer record and set it
+        if (authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_EMPLOYER"))) {
+            Employer employer = employerRepository.findByContactEmail(user.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Employer profile not found for this user. Please contact admin."));
+            jobOrder.setEmployer(employer);
         }
 
         // Set initial status to PENDING_APPROVAL for employers, OPEN for admins
