@@ -8,7 +8,7 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import CommissionSummary from '../components/CommissionSummary';
 
-const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'CV', 'EDUCATIONAL_CERTIFICATE', 'POLICE_CLEARANCE', 'MEDICAL_REPORT', 'PHOTO', 'OFFER_LETTER', 'CONTRACT', 'VISA', 'OTHER'];
 
 const MyApplicationPage: React.FC = () => {
   const { user } = useAuth();
@@ -257,7 +257,7 @@ const MyApplicationPage: React.FC = () => {
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-300 ${
-                              app.currentStatus === 'REJECTED' || app.currentStatus === 'WITHDRAWN'
+                              app.currentStatus === 'REJECTED'
                                 ? 'bg-red-500'
                                 : app.currentStatus === 'PLACED'
                                 ? 'bg-green-500'
