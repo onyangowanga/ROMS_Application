@@ -45,6 +45,9 @@ public class DocumentController {
     @Autowired(required = false)
     private com.roms.service.LocalFileStorageService localFileStorageService;
 
+    @Autowired(required = false)
+    private com.roms.service.CloudinaryService cloudinaryService;
+
     @PostMapping("/candidates/{candidateId}/documents")
     public ResponseEntity<?> uploadDocument(
             @PathVariable Long candidateId,
@@ -82,15 +85,18 @@ public class DocumentController {
             }
             // If authentication is null or anonymous, allow upload (for registration process)
 
-            // Upload to Google Drive or local storage
+            // Upload to Cloudinary, local storage, or Google Drive
             String driveFileId;
-            
-            if (localFileStorageService != null) {
+
+            if (cloudinaryService != null) {
+                // Use Cloudinary for production (cloud mode)
+                driveFileId = cloudinaryService.uploadFile(file, candidateId);
+            } else if (localFileStorageService != null) {
                 // Use local file storage for development
                 driveFileId = localFileStorageService.storeFile(file);
             } else {
-                // Use Google Drive
-                driveFileId = driveService.uploadFile(file, null);
+                // Use Google Drive as fallback
+                driveFileId = driveService.uploadFile(file, candidateId);
             }
 
             // Create document metadata
@@ -177,22 +183,43 @@ public class DocumentController {
                 }
             }
 
-            // Download from Google Drive (backend streams file - no direct Drive URLs exposed)
-            InputStream inputStream = driveService.downloadFile(document.getDriveFileId());
-            byte[] fileData = inputStream.readAllBytes();
+            // Download from Cloudinary, local storage, or Google Drive
+            if (cloudinaryService != null) {
+                // For Cloudinary, redirect to the direct URL
+                String fileUrl = cloudinaryService.getFileUrl(document.getDriveFileId());
+                HttpHeaders headers = new HttpHeaders();
+                headers.setLocation(java.net.URI.create(fileUrl));
+                return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
+            } else if (localFileStorageService != null) {
+                // For local storage, serve the file directly
+                java.nio.file.Path filePath = localFileStorageService.loadFile(document.getDriveFileId());
+                Resource resource = new org.springframework.core.io.FileSystemResource(filePath.toFile());
 
-            // Prepare resource
-            Resource resource = new ByteArrayResource(fileData);
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"");
+                headers.setContentType(MediaType.parseMediaType(document.getContentType()));
 
-            // Set headers for file download
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"");
-            headers.setContentType(MediaType.parseMediaType(document.getContentType()));  // Use contentType field
+                return ResponseEntity.ok()
+                        .headers(headers)
+                        .body(resource);
+            } else {
+                // Download from Google Drive (backend streams file - no direct Drive URLs exposed)
+                InputStream inputStream = driveService.downloadFile(document.getDriveFileId());
+                byte[] fileData = inputStream.readAllBytes();
 
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentLength(fileData.length)
-                    .body(resource);
+                // Prepare resource
+                Resource resource = new ByteArrayResource(fileData);
+
+                // Set headers for file download
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"");
+                headers.setContentType(MediaType.parseMediaType(document.getContentType()));
+
+                return ResponseEntity.ok()
+                        .headers(headers)
+                        .contentLength(fileData.length)
+                        .body(resource);
+            }
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -209,8 +236,10 @@ public class DocumentController {
             CandidateDocument document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Document not found"));
 
-            // Delete from storage (Google Drive or local)
-            if (localFileStorageService != null) {
+            // Delete from storage (Cloudinary, local, or Google Drive)
+            if (cloudinaryService != null) {
+                cloudinaryService.deleteFile(document.getDriveFileId());
+            } else if (localFileStorageService != null) {
                 localFileStorageService.deleteFile(document.getDriveFileId());
             } else {
                 driveService.deleteFile(document.getDriveFileId());

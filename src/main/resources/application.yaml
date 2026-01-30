@@ -44,10 +44,16 @@ google:
     folder-id: 14gR2AThIrJKL3pNO8EZONmcEj__HAPil # Root folder ID for documents
     shared-link-duration: 300 # 5 minutes in seconds
 
+# Cloudinary Configuration (for cloud storage)
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+
 # Application Settings
 roms:
   storage:
-    mode: local # Options: 'local' for development, 'cloud' for Google Drive
+    mode: ${ROMS_STORAGE_MODE:local} # Options: 'local' for development, 'cloud' for Cloudinary
   passport:
     min-validity-months: 6
   document:
