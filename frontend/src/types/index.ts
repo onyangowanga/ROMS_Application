@@ -22,27 +22,37 @@ export interface AuthResponse {
 }
 
 // Candidate Types
-export type CandidateStatus = 
-  | 'APPLIED'
-  | 'DOCUMENTS_PENDING'
-  | 'DOCUMENTS_UNDER_REVIEW'
+export type CandidateStatus =
+  | 'APPLICATION_SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'DOCUMENTS_INSUFFICIENT'
   | 'DOCUMENTS_APPROVED'
   | 'INTERVIEW_SCHEDULED'
-  | 'INTERVIEW_COMPLETED'
-  | 'MEDICAL_IN_PROGRESS'
+  | 'INTERVIEW_PASSED'
+  | 'MEDICAL_PENDING'
   | 'MEDICAL_PASSED'
-  | 'OFFER_ISSUED'
-  | 'OFFER_SIGNED'
   | 'VISA_PROCESSING'
-  | 'VISA_APPROVED'
-  | 'DEPLOYED'
+  | 'OFFER_ISSUED'
+  | 'OFFER_ACCEPTED'
+  | 'DEPLOYMENT_PENDING'
   | 'PLACED'
-  | 'REJECTED'
-  | 'WITHDRAWN';
+  | 'REJECTED';
 
 export type MedicalStatus = 'PENDING' | 'PASSED' | 'FAILED' | 'WAIVED';
 
-export type DocumentType = 'PASSPORT' | 'MEDICAL' | 'OFFER' | 'CONTRACT' | 'VISA' | 'OTHER';
+export type DocumentType =
+  | 'PASSPORT'
+  | 'CV'
+  | 'EDUCATIONAL_CERTIFICATE'
+  | 'POLICE_CLEARANCE'
+  | 'MEDICAL_REPORT'
+  | 'PHOTO'
+  | 'NATIONAL_ID'
+  | 'BIRTH_CERTIFICATE'
+  | 'OFFER_LETTER'
+  | 'CONTRACT'
+  | 'VISA'
+  | 'OTHER';
 
 export interface Candidate {
   id: number;

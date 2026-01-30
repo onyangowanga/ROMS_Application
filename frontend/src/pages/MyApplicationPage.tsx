@@ -8,7 +8,7 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import CommissionSummary from '../components/CommissionSummary';
 
-const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'CV', 'EDUCATIONAL_CERTIFICATE', 'POLICE_CLEARANCE', 'MEDICAL_REPORT', 'PHOTO', 'OFFER_LETTER', 'CONTRACT', 'VISA', 'OTHER'];
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
 
 const MyApplicationPage: React.FC = () => {
   const { user } = useAuth();
@@ -138,22 +138,20 @@ const MyApplicationPage: React.FC = () => {
 
   const getProgressPercentage = (status: CandidateStatus): number => {
     const progressMap: Record<CandidateStatus, number> = {
-      APPLIED: 6,
-      DOCUMENTS_PENDING: 12,
-      DOCUMENTS_UNDER_REVIEW: 18,
+      APPLICATION_SUBMITTED: 6,
+      UNDER_REVIEW: 12,
+      DOCUMENTS_INSUFFICIENT: 15,
       DOCUMENTS_APPROVED: 25,
       INTERVIEW_SCHEDULED: 37,
-      INTERVIEW_COMPLETED: 43,
-      MEDICAL_IN_PROGRESS: 56,
+      INTERVIEW_PASSED: 50,
+      MEDICAL_PENDING: 56,
       MEDICAL_PASSED: 62,
-      OFFER_ISSUED: 75,
-      OFFER_SIGNED: 81,
-      VISA_PROCESSING: 87,
-      VISA_APPROVED: 93,
-      DEPLOYED: 96,
+      VISA_PROCESSING: 75,
+      OFFER_ISSUED: 81,
+      OFFER_ACCEPTED: 87,
+      DEPLOYMENT_PENDING: 93,
       PLACED: 100,
       REJECTED: 0,
-      WITHDRAWN: 0,
     };
     return progressMap[status] || 0;
   };
@@ -470,16 +468,7 @@ const MyApplicationPage: React.FC = () => {
                       </div>
                     )}
 
-                    {app.currentStatus === 'OFFER_ACCEPTED' && (
-                      <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded-lg">
-                        <h4 className="text-sm font-semibold text-green-900 mb-2">
-                          ✅ Offer Accepted
-                        </h4>
-                        <p className="text-xs text-green-800">
-                          Preparing for deployment. You will be notified of next steps.
-                        </p>
-                      </div>
-                    )}
+                    {/* Removed OFFER_ACCEPTED status block: not a valid CandidateStatus. If needed, use a valid status or update backend/frontend types accordingly. */}
 
                     {/* Final Placement Success */}
                     {app.currentStatus === 'PLACED' && (

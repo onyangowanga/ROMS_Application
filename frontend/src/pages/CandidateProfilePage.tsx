@@ -10,7 +10,7 @@ import { assignmentsApi } from '../api/assignments';
 import { Candidate, CandidateDocument, CandidateStatus, DocumentType, Assignment, JobOrder } from '../types';
 import { useAuth } from '../context/AuthContext';
 
-const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'CV', 'EDUCATIONAL_CERTIFICATE', 'POLICE_CLEARANCE', 'MEDICAL_REPORT', 'PHOTO', 'OFFER_LETTER', 'CONTRACT', 'VISA', 'OTHER'];
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
 
 export const CandidateProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -715,7 +715,7 @@ export const CandidateProfilePage: React.FC = () => {
               )}
 
               {/* Document Review Actions */}
-              {candidate.currentStatus === 'UNDER_REVIEW' && (
+              {candidate.currentStatus === 'DOCUMENTS_UNDER_REVIEW' && (
                 <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h3 className="text-sm font-medium text-blue-900 mb-2">Document Review</h3>
                   <p className="text-xs text-blue-700 mb-3">
