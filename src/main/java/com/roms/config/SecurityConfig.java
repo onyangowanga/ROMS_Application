@@ -77,6 +77,9 @@ public class SecurityConfig {
                 // Health check for Render
                 .requestMatchers("/actuator/health", "/health").permitAll()
 
+                // Setup endpoint (only for initial deployment)
+                .requestMatchers("/api/setup/**").permitAll()
+
                 // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
