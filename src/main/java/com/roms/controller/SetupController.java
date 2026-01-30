@@ -30,8 +30,8 @@ public class SetupController {
 
     @PostMapping("/init-admin")
     public ResponseEntity<?> initializeAdmin() {
-        // Check if any admin already exists
-        if (userRepository.findByRole(UserRole.SUPER_ADMIN).stream().findAny().isPresent()) {
+        // Check if admin user already exists
+        if (userRepository.findByUsername("admin").isPresent()) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Admin user already exists");
             response.put("status", "skipped");
@@ -39,13 +39,16 @@ public class SetupController {
         }
 
         // Create default admin user
-        User admin = new User();
-        admin.setUsername("admin");
-        admin.setEmail("admin@roms.com");
-        admin.setPassword(passwordEncoder.encode("admin123"));
-        admin.setRole(UserRole.SUPER_ADMIN);
-        admin.setCreatedAt(LocalDateTime.now());
-        admin.setUpdatedAt(LocalDateTime.now());
+        User admin = User.builder()
+                .username("admin")
+                .email("admin@roms.com")
+                .password(passwordEncoder.encode("admin123"))
+                .role(UserRole.SUPER_ADMIN)
+                .fullName("System Administrator")
+                .isEmailVerified(true)
+                .isLocked(false)
+                .failedLoginAttempts(0)
+                .build();
 
         userRepository.save(admin);
 
