@@ -72,21 +72,44 @@ public class JobOrderController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // If the user is an EMPLOYER, find their employer record and set it
-        if (authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_EMPLOYER"))) {
+        // Check if user is admin
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN"));
+
+        // Set employer: Admin should provide employer_id in request, Employer user is looked up by email
+        if (isAdmin) {
+            // Admin must specify employer in the request, or it should already be set
+            if (jobOrder.getEmployer() == null || jobOrder.getEmployer().getId() == null) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("Employer must be specified when creating a job order"));
+            }
+            // Verify the employer exists
+            Employer employer = employerRepository.findById(jobOrder.getEmployer().getId())
+                    .orElseThrow(() -> new RuntimeException("Employer not found with id: " + jobOrder.getEmployer().getId()));
+            jobOrder.setEmployer(employer);
+        } else {
+            // For EMPLOYER role, find their employer record and set it
             Employer employer = employerRepository.findByContactEmail(user.getEmail())
                     .orElseThrow(() -> new RuntimeException("Employer profile not found for this user. Please contact admin."));
             jobOrder.setEmployer(employer);
         }
 
-        // Set initial status to PENDING_APPROVAL for employers, OPEN for admins
-        jobOrder.setStatus(JobOrderStatus.PENDING_APPROVAL);
+        // Set initial status: OPEN for admins (auto-approved), PENDING_APPROVAL for employers
+        if (isAdmin) {
+            jobOrder.setStatus(JobOrderStatus.OPEN);
+        } else {
+            jobOrder.setStatus(JobOrderStatus.PENDING_APPROVAL);
+        }
         jobOrder.setHeadcountFilled(0);
 
         JobOrder savedJobOrder = jobOrderRepository.save(jobOrder);
+
+        String message = isAdmin
+            ? "Job order created successfully and is now open"
+            : "Job order created successfully and pending approval";
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Job order created successfully and pending approval", savedJobOrder));
+                .body(ApiResponse.success(message, savedJobOrder));
     }
 
     /**
