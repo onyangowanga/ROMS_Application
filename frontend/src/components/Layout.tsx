@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -92,7 +93,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </div>
             </div>
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="hidden sm:flex flex-shrink-0">
                 <span className="text-sm text-gray-700 mr-4">
                   {user?.fullName} ({user?.role})
                 </span>
@@ -103,9 +104,117 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   Logout
                 </button>
               </div>
+              {/* Mobile menu button */}
+              <div className="sm:hidden">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+                >
+                  <span className="sr-only">Open main menu</span>
+                  {mobileMenuOpen ? (
+                    <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden">
+            <div className="pt-2 pb-3 space-y-1">
+              {!isApplicant && (
+                <Link
+                  to="/dashboard"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  🏠 Home
+                </Link>
+              )}
+              {isApplicant && (
+                <Link
+                  to="/my-application"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  My Application
+                </Link>
+              )}
+              {canAccessCandidates && (
+                <Link
+                  to="/candidates"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Candidates
+                </Link>
+              )}
+              {canAccessEmployers && (
+                <Link
+                  to="/employers"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Employers
+                </Link>
+              )}
+              {!isApplicant && (
+                <Link
+                  to="/jobs"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Jobs
+                </Link>
+              )}
+              {canAccessFinance && (
+                <Link
+                  to="/finance"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  💰 Finance
+                </Link>
+              )}
+              {canAccessUsers && (
+                <Link
+                  to="/users"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Users
+                </Link>
+              )}
+            </div>
+            <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="flex items-center px-4">
+                <div>
+                  <div className="text-base font-medium text-gray-800">{user?.fullName}</div>
+                  <div className="text-sm font-medium text-gray-500">{user?.role}</div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1">
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Page Content */}
