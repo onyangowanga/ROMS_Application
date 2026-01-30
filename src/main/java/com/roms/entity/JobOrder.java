@@ -37,6 +37,7 @@ public class JobOrder extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employer_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "jobOrders"})
     private Employer employer;
 
     @NotBlank
