@@ -12,6 +12,7 @@ import EmployersPage from './pages/EmployersPage';
 import JobsPage from './pages/JobsPage';
 import JobNewPage from './pages/JobNewPage';
 import MyApplicationPage from './pages/MyApplicationPage';
+import FinancePage from './pages/FinancePage';
 import { UsersPage } from './pages/UsersPage';
 import './index.css';
 
@@ -47,6 +48,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OPERATIONS_STAFF']}>
                 <CandidateProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/finance"
+            element={
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE_MANAGER']}>
+                <FinancePage />
               </ProtectedRoute>
             }
           />

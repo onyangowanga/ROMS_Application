@@ -1,4 +1,6 @@
 package com.roms.controller;
+import com.roms.dto.CandidateWorkflowDTO;
+import com.roms.service.CandidateWorkflowQueryService;
 
 import com.roms.dto.ApiResponse;
 import com.roms.dto.JobApplicationRequest;
@@ -14,8 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/candidates")
@@ -29,6 +33,15 @@ public class CandidateController {
 
     @Autowired
     private JobApplicationService jobApplicationService;
+
+    @Autowired
+    private CandidateWorkflowQueryService workflowQueryService;
+    @GetMapping("/applicant/workflow")
+    @PreAuthorize("hasRole('APPLICANT')")
+    public ResponseEntity<?> getApplicantWorkflow(@RequestParam String email) {
+        CandidateWorkflowDTO dto = workflowQueryService.getWorkflowForApplicant(email);
+        return ResponseEntity.ok(dto);
+    }
 
     /**
      * Public endpoint for job applications
@@ -77,7 +90,7 @@ public class CandidateController {
                     .body(ApiResponse.error("Candidate with this passport number already exists"));
         }
 
-        candidate.setCurrentStatus(CandidateStatus.APPLIED);
+        candidate.setCurrentStatus(CandidateStatus.APPLICATION_SUBMITTED);
         Candidate savedCandidate = candidateRepository.save(candidate);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Candidate created successfully", savedCandidate));
@@ -160,11 +173,86 @@ public class CandidateController {
             boolean canTransition = workflowService.canTransition(id, newStatus);
             String reason = canTransition ? null : workflowService.getTransitionBlockReason(id, newStatus);
 
-            return ResponseEntity.ok(ApiResponse.success("Transition check complete", 
+            return ResponseEntity.ok(ApiResponse.success("Transition check complete",
                     Map.of("canTransition", canTransition, "reason", reason)));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Check failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get allowed workflow transitions for a candidate (for frontend UX)
+     */
+    @GetMapping("/{id}/allowed-transitions")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER', 'APPLICANT')")
+    public ResponseEntity<?> getAllowedTransitions(@PathVariable Long id) {
+        try {
+            Candidate candidate = candidateRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Candidate not found with id: " + id));
+            CandidateStatus currentStatus = candidate.getCurrentStatus();
+
+            // List all possible statuses except current
+            List<CandidateStatus> allStatuses = Arrays.asList(CandidateStatus.values());
+            List<CandidateStatus> allowed = allStatuses.stream()
+                    .filter(status -> status != currentStatus)
+                    .filter(status -> {
+                        try {
+                            return workflowService.canTransition(id, status);
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(ApiResponse.success("Allowed transitions fetched", allowed));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to fetch allowed transitions: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Staff endpoint: Review documents and auto-transition
+     */
+    @PostMapping("/{id}/review-documents")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF')")
+    public ResponseEntity<?> reviewDocuments(@PathVariable Long id) {
+        try {
+            Candidate candidate = workflowService.reviewDocuments(id);
+            return ResponseEntity.ok(ApiResponse.success("Documents reviewed successfully", candidate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Document review failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Staff endpoint: Proceed after document approval
+     */
+    @PostMapping("/{id}/proceed-after-documents")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OPERATIONS_STAFF')")
+    public ResponseEntity<?> proceedAfterDocuments(@PathVariable Long id) {
+        try {
+            Candidate candidate = workflowService.proceedAfterDocumentApproval(id);
+            return ResponseEntity.ok(ApiResponse.success("Proceeding to next stage", candidate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Transition failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Applicant endpoint: Accept offer letter
+     */
+    @PostMapping("/{id}/accept-offer")
+    @PreAuthorize("hasAnyRole('APPLICANT', 'SUPER_ADMIN', 'OPERATIONS_STAFF')")
+    public ResponseEntity<?> acceptOffer(@PathVariable Long id) {
+        try {
+            Candidate candidate = workflowService.acceptOffer(id);
+            return ResponseEntity.ok(ApiResponse.success("Offer accepted successfully", candidate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to accept offer: " + e.getMessage()));
         }
     }
 }

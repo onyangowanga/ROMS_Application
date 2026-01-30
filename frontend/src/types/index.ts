@@ -33,6 +33,8 @@ export type CandidateStatus =
   | 'MEDICAL_PASSED'
   | 'OFFER_ISSUED'
   | 'OFFER_SIGNED'
+  | 'VISA_PROCESSING'
+  | 'VISA_APPROVED'
   | 'DEPLOYED'
   | 'PLACED'
   | 'REJECTED'

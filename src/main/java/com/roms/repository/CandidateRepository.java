@@ -12,20 +12,20 @@ import java.util.Optional;
 
 @Repository
 public interface CandidateRepository extends JpaRepository<Candidate, Long> {
-    
+
     Optional<Candidate> findByInternalRefNo(String internalRefNo);
-    
+
     @Query("SELECT c FROM Candidate c WHERE c.passportNo = :passportNo AND c.deletedAt IS NULL")
     Optional<Candidate> findActiveByPassportNo(@Param("passportNo") String passportNo);
-    
+
     List<Candidate> findByCurrentStatus(CandidateStatus status);
-    
+
     @Query("SELECT c FROM Candidate c WHERE c.deletedAt IS NULL")
     List<Candidate> findAllActive();
-    
+
     Optional<Candidate> findByEmailAndDeletedAtIsNull(String email);
-    
+
     List<Candidate> findAllByEmailAndDeletedAtIsNull(String email);
-    
+
     boolean existsByPassportNoAndDeletedAtIsNull(String passportNo);
 }

@@ -2,17 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { candidateApi } from '../api/candidates';
+import { assignmentsApi } from '../api/assignments';
 import { Candidate, CandidateDocument, DocumentType, CandidateStatus } from '../types';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
+import CommissionSummary from '../components/CommissionSummary';
 
-const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'CV', 'EDUCATIONAL_CERTIFICATE', 'POLICE_CLEARANCE', 'MEDICAL_REPORT', 'PHOTO', 'OFFER_LETTER', 'CONTRACT', 'VISA', 'OTHER'];
 
 const MyApplicationPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Candidate[]>([]);
   const [documents, setDocuments] = useState<{ [key: number]: CandidateDocument[] }>({});
+  const [activeAssignments, setActiveAssignments] = useState<{ [key: number]: number | null }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -47,6 +50,7 @@ const MyApplicationPage: React.FC = () => {
 
       // Load documents for all applications
       const docsMap: { [key: number]: CandidateDocument[] } = {};
+      const assignmentsMap: { [key: number]: number | null } = {};
       for (const app of apps) {
         try {
           const docs = await candidateApi.getDocuments(app.id);
@@ -54,8 +58,19 @@ const MyApplicationPage: React.FC = () => {
         } catch (err) {
           docsMap[app.id] = [];
         }
+
+        // Load active assignment if exists
+        try {
+          const assignments = await assignmentsApi.getAllAssignments();
+          const candidateAssignments = assignments.filter((a: any) => a.candidateId === app.id);
+          const activeAssignment = candidateAssignments.find((a: any) => a.isActive);
+          assignmentsMap[app.id] = activeAssignment?.id || null;
+        } catch (err) {
+          assignmentsMap[app.id] = null;
+        }
       }
       setDocuments(docsMap);
+      setActiveAssignments(assignmentsMap);
     } catch (err: any) {
       console.error('Error loading applications:', err);
       console.error('Error response:', err.response);
@@ -123,16 +138,18 @@ const MyApplicationPage: React.FC = () => {
 
   const getProgressPercentage = (status: CandidateStatus): number => {
     const progressMap: Record<CandidateStatus, number> = {
-      APPLIED: 7,
-      DOCUMENTS_PENDING: 14,
-      DOCUMENTS_UNDER_REVIEW: 21,
-      DOCUMENTS_APPROVED: 28,
-      INTERVIEW_SCHEDULED: 42,
-      INTERVIEW_COMPLETED: 50,
-      MEDICAL_IN_PROGRESS: 64,
-      MEDICAL_PASSED: 71,
-      OFFER_ISSUED: 85,
-      OFFER_SIGNED: 92,
+      APPLIED: 6,
+      DOCUMENTS_PENDING: 12,
+      DOCUMENTS_UNDER_REVIEW: 18,
+      DOCUMENTS_APPROVED: 25,
+      INTERVIEW_SCHEDULED: 37,
+      INTERVIEW_COMPLETED: 43,
+      MEDICAL_IN_PROGRESS: 56,
+      MEDICAL_PASSED: 62,
+      OFFER_ISSUED: 75,
+      OFFER_SIGNED: 81,
+      VISA_PROCESSING: 87,
+      VISA_APPROVED: 93,
       DEPLOYED: 96,
       PLACED: 100,
       REJECTED: 0,
@@ -296,6 +313,15 @@ const MyApplicationPage: React.FC = () => {
                 {/* Expanded Content */}
                 {expandedApp === app.id && (
                   <div className="px-6 py-4 bg-gray-50">
+                    {/* Phase 2B: Commission Summary for Applicants */}
+                    {activeAssignments[app.id] && (
+                      <div className="mb-6">
+                        <CommissionSummary 
+                          candidateId={app.id}
+                        />
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Application Details */}
                       <div>
@@ -415,6 +441,64 @@ const MyApplicationPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Offer Letter Section */}
+                    {app.currentStatus === 'OFFER_ISSUED' && (
+                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+                        <h4 className="text-sm font-semibold text-yellow-900 mb-2">
+                          📄 Offer Letter Issued
+                        </h4>
+                        <p className="text-xs text-yellow-800 mb-3">
+                          Please review your offer letter and accept to proceed with deployment.
+                        </p>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm('Do you accept this job offer?')) {
+                              try {
+                                await candidateApi.acceptOffer(app.id);
+                                loadApplications();
+                                alert('Offer accepted successfully! Preparing for deployment.');
+                              } catch (err: any) {
+                                alert(err.response?.data?.message || 'Failed to accept offer');
+                              }
+                            }
+                          }}
+                          className="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                        >
+                          Accept Offer
+                        </button>
+                      </div>
+                    )}
+
+                    {app.currentStatus === 'OFFER_ACCEPTED' && (
+                      <div className="mt-4 p-4 bg-green-50 border border-green-300 rounded-lg">
+                        <h4 className="text-sm font-semibold text-green-900 mb-2">
+                          ✅ Offer Accepted
+                        </h4>
+                        <p className="text-xs text-green-800">
+                          Preparing for deployment. You will be notified of next steps.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Final Placement Success */}
+                    {app.currentStatus === 'PLACED' && (
+                      <div className="mt-4 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-4xl mb-3">🎉</div>
+                          <h4 className="text-lg font-bold text-green-900 mb-2">
+                            Successfully Placed!
+                          </h4>
+                          <div className="text-sm text-gray-700 space-y-1">
+                            <p><strong>Position:</strong> {app.expectedPosition || 'N/A'}</p>
+                            <p><strong>Reference:</strong> {app.internalRefNo}</p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Congratulations on your successful placement!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

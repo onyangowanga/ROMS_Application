@@ -6,6 +6,7 @@ import { candidateApi } from '../api/candidates';
 import { dashboardApi, DashboardStats, EmployerDashboardStats } from '../api/dashboard';
 import { Candidate, CandidateStatus } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
+import ApplicantWorkflowTimeline from '../components/ApplicantWorkflowTimeline';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export const DashboardPage: React.FC = () => {
 
   const isEmployer = user?.role === 'EMPLOYER';
   const isStaff = user?.role && ['SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER'].includes(user.role);
+  const isApplicant = user?.role === 'APPLICANT';
 
   useEffect(() => {
     loadStats();
@@ -78,6 +80,7 @@ export const DashboardPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">
           Welcome, {user?.fullName}
         </h1>
+        {isApplicant && <ApplicantWorkflowTimeline />}
 
         {/* Employer Dashboard */}
         {isEmployer && employerStats && (

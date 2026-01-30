@@ -45,3 +45,4 @@ service-account-*.json
 ### Application Configuration (sensitive) ###
 application-local.yaml
 application-prod.yaml
+/.apt_generated_tests/

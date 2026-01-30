@@ -87,7 +87,7 @@ public class Candidate extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "current_status", nullable = false)
     @Builder.Default
-    private CandidateStatus currentStatus = CandidateStatus.APPLIED;
+    private CandidateStatus currentStatus = CandidateStatus.APPLICATION_SUBMITTED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "medical_status")

@@ -2,12 +2,14 @@ package com.roms.service;
 
 import com.roms.entity.Candidate;
 import com.roms.entity.CandidateDocument;
+import com.roms.entity.JobOrder;
 import com.roms.enums.CandidateStatus;
 import com.roms.enums.DocumentType;
 import com.roms.enums.MedicalStatus;
 import com.roms.exception.WorkflowException;
 import com.roms.repository.CandidateDocumentRepository;
 import com.roms.repository.CandidateRepository;
+import com.roms.repository.JobOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,13 @@ import java.util.Optional;
  * Workflow State Machine Service
  * Implements guard logic to prevent process skipping
  * 
+ * Phase 2B Updates:
+ * - VISA_PROCESSING requires downpayment
+ * - PLACED requires full commission payment
+ * 
  * Canonical State Flow:
- * APPLIED → DOCS_SUBMITTED → INTERVIEWED → MEDICAL_PASSED → OFFER_ISSUED → OFFER_ACCEPTED → PLACED
+ * APPLICATION_SUBMITTED → UNDER_REVIEW → DOCUMENTS_INSUFFICIENT → DOCUMENTS_APPROVED → INTERVIEW_SCHEDULED → INTERVIEW_PASSED → MEDICAL_PENDING → MEDICAL_PASSED → VISA_PROCESSING → OFFER_ISSUED → OFFER_ACCEPTED → DEPLOYMENT_PENDING → PLACED → REJECTED
+ * OFFER_ACCEPTED → VISA_PROCESSING → VISA_APPROVED → DEPLOYED → PLACED
  */
 @Service
 public class CandidateWorkflowService {
@@ -34,6 +41,15 @@ public class CandidateWorkflowService {
 
     @Autowired
     private AssignmentService assignmentService;
+
+    @Autowired
+    private CommissionPaymentService commissionPaymentService;
+
+    @Autowired
+    private DocumentEvaluationService documentEvaluationService;
+
+    @Autowired
+    private JobOrderRepository jobOrderRepository;
 
     @Value("${roms.passport.min-validity-months:6}")
     private int passportMinValidityMonths;
@@ -61,87 +77,151 @@ public class CandidateWorkflowService {
     }
 
     /**
+     * AUTOMATED: Transition from UNDER_REVIEW based on document evaluation
+     */
+    @Transactional
+    public Candidate reviewDocuments(Long candidateId) {
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new WorkflowException("Candidate not found"));
+
+        if (candidate.getCurrentStatus() != CandidateStatus.UNDER_REVIEW) {
+            throw new WorkflowException("Can only review documents when status is UNDER_REVIEW");
+        }
+
+        DocumentEvaluationService.DocumentEvaluationResult result =
+                documentEvaluationService.evaluateDocuments(candidate);
+
+        if (result.isSufficient()) {
+            candidate.setCurrentStatus(CandidateStatus.DOCUMENTS_APPROVED);
+        } else {
+            candidate.setCurrentStatus(CandidateStatus.DOCUMENTS_INSUFFICIENT);
+        }
+
+        return candidateRepository.save(candidate);
+    }
+
+    /**
+     * AUTOMATED: Handle transition after DOCUMENTS_APPROVED
+     */
+    @Transactional
+    public Candidate proceedAfterDocumentApproval(Long candidateId) {
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new WorkflowException("Candidate not found"));
+
+        if (candidate.getCurrentStatus() != CandidateStatus.DOCUMENTS_APPROVED) {
+            throw new WorkflowException("Can only proceed from DOCUMENTS_APPROVED status");
+        }
+
+        var assignment = assignmentService.getActiveAssignment(candidateId);
+        if (assignment == null) {
+            throw new WorkflowException("No active job assignment found");
+        }
+
+        // Fetch the JobOrder to check if interview is required
+        JobOrder jobOrder = jobOrderRepository.findById(assignment.getJobOrderId())
+                .orElseThrow(() -> new WorkflowException("Job order not found"));
+
+        Boolean requiresInterview = jobOrder.getRequiresInterview();
+        if (requiresInterview == null || requiresInterview) {
+            candidate.setCurrentStatus(CandidateStatus.INTERVIEW_SCHEDULED);
+        } else {
+            candidate.setCurrentStatus(CandidateStatus.MEDICAL_PENDING);
+            candidate.setMedicalStatus(MedicalStatus.PENDING);
+        }
+
+        return candidateRepository.save(candidate);
+    }
+
+    /**
+     * Applicant accepts offer letter
+     */
+    @Transactional
+    public Candidate acceptOffer(Long candidateId) {
+        Candidate candidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new WorkflowException("Candidate not found"));
+
+        if (candidate.getCurrentStatus() != CandidateStatus.OFFER_ISSUED) {
+            throw new WorkflowException("Can only accept offer when status is OFFER_ISSUED");
+        }
+
+        candidate.setCurrentStatus(CandidateStatus.OFFER_ACCEPTED);
+        return candidateRepository.save(candidate);
+    }
+
+    /**
      * Validate if transition is allowed
      */
     private void validateTransition(Candidate candidate, CandidateStatus from, CandidateStatus to) {
         // Cannot transition if already in terminal states
-        if (from == CandidateStatus.PLACED || from == CandidateStatus.REJECTED || from == CandidateStatus.WITHDRAWN) {
+        if (from == CandidateStatus.PLACED || from == CandidateStatus.REJECTED) {
             throw new WorkflowException("Cannot transition from terminal status: " + from);
         }
 
-        // Define valid transitions for 14-stage workflow
+        // Define valid transitions for canonical workflow
         switch (to) {
-            case DOCUMENTS_PENDING:
-                if (from != CandidateStatus.APPLIED) {
-                    throw new WorkflowException("Can only set DOCUMENTS_PENDING from APPLIED status");
+            case UNDER_REVIEW:
+                if (from != CandidateStatus.APPLICATION_SUBMITTED) {
+                    throw new WorkflowException("Can only set UNDER_REVIEW from APPLICATION_SUBMITTED status");
                 }
                 break;
-
-            case DOCUMENTS_UNDER_REVIEW:
-                if (from != CandidateStatus.APPLIED && from != CandidateStatus.DOCUMENTS_PENDING) {
-                    throw new WorkflowException("Can only review documents from APPLIED or DOCUMENTS_PENDING status");
+            case DOCUMENTS_INSUFFICIENT:
+                if (from != CandidateStatus.UNDER_REVIEW) {
+                    throw new WorkflowException("Can only set DOCUMENTS_INSUFFICIENT from UNDER_REVIEW status");
                 }
                 break;
-
             case DOCUMENTS_APPROVED:
-                if (from != CandidateStatus.DOCUMENTS_UNDER_REVIEW) {
-                    throw new WorkflowException("Can only approve documents after review");
+                if (from != CandidateStatus.UNDER_REVIEW && from != CandidateStatus.DOCUMENTS_INSUFFICIENT) {
+                    throw new WorkflowException("Can only approve documents from UNDER_REVIEW or DOCUMENTS_INSUFFICIENT status");
                 }
                 break;
-
             case INTERVIEW_SCHEDULED:
                 if (from != CandidateStatus.DOCUMENTS_APPROVED) {
                     throw new WorkflowException("Can only schedule interview after documents are approved");
                 }
                 break;
-
-            case INTERVIEW_COMPLETED:
+            case INTERVIEW_PASSED:
                 if (from != CandidateStatus.INTERVIEW_SCHEDULED) {
-                    throw new WorkflowException("Can only complete interview after it's scheduled");
+                    throw new WorkflowException("Can only pass interview after it is scheduled");
                 }
                 break;
-
-            case MEDICAL_IN_PROGRESS:
-                if (from != CandidateStatus.INTERVIEW_COMPLETED) {
-                    throw new WorkflowException("Can only start medical process after interview completion");
+            case MEDICAL_PENDING:
+                if (from != CandidateStatus.INTERVIEW_PASSED) {
+                    throw new WorkflowException("Can only set MEDICAL_PENDING after interview is passed");
                 }
                 break;
-
             case MEDICAL_PASSED:
-                if (from != CandidateStatus.MEDICAL_IN_PROGRESS) {
-                    throw new WorkflowException("Can only pass medical from MEDICAL_IN_PROGRESS status");
+                if (from != CandidateStatus.MEDICAL_PENDING) {
+                    throw new WorkflowException("Can only pass medical from MEDICAL_PENDING status");
                 }
                 break;
-
-            case OFFER_ISSUED:
+            case VISA_PROCESSING:
                 if (from != CandidateStatus.MEDICAL_PASSED) {
-                    throw new WorkflowException("Can only issue offer after medical clearance");
+                    throw new WorkflowException("Can only start visa processing after medical is passed");
                 }
                 break;
-
-            case OFFER_SIGNED:
+            case OFFER_ISSUED:
+                if (from != CandidateStatus.VISA_PROCESSING) {
+                    throw new WorkflowException("Can only issue offer after visa processing");
+                }
+                break;
+            case OFFER_ACCEPTED:
                 if (from != CandidateStatus.OFFER_ISSUED) {
-                    throw new WorkflowException("Can only sign offer after it's issued");
+                    throw new WorkflowException("Can only accept offer after it is issued");
                 }
                 break;
-
-            case DEPLOYED:
-                if (from != CandidateStatus.OFFER_SIGNED) {
-                    throw new WorkflowException("Can only deploy after offer is signed");
+            case DEPLOYMENT_PENDING:
+                if (from != CandidateStatus.OFFER_ACCEPTED) {
+                    throw new WorkflowException("Can only set DEPLOYMENT_PENDING after offer is accepted");
                 }
                 break;
-
             case PLACED:
-                if (from != CandidateStatus.DEPLOYED) {
-                    throw new WorkflowException("Can only place candidate after deployment");
+                if (from != CandidateStatus.DEPLOYMENT_PENDING) {
+                    throw new WorkflowException("Can only place candidate after deployment is pending");
                 }
                 break;
-
             case REJECTED:
-            case WITHDRAWN:
-                // Can reject or withdraw from any non-terminal status
+                // Can reject from any non-terminal status
                 break;
-
             default:
                 break;
         }
@@ -152,47 +232,82 @@ public class CandidateWorkflowService {
      */
     private void applyGuardLogic(Candidate candidate, CandidateStatus newStatus) {
         switch (newStatus) {
-            case DOCUMENTS_UNDER_REVIEW:
+            case UNDER_REVIEW:
                 // Ensure required documents are uploaded
                 validateRequiredDocuments(candidate);
                 break;
-
             case DOCUMENTS_APPROVED:
                 // Ensure passport validity before approval
                 validatePassportValidity(candidate);
                 break;
-
             case INTERVIEW_SCHEDULED:
                 // Ensure interview details are set
                 if (candidate.getInterviewDate() == null) {
                     throw new WorkflowException("Cannot schedule interview: Interview date is required");
                 }
                 break;
-
-            case MEDICAL_IN_PROGRESS:
+            case MEDICAL_PENDING:
                 // Set medical status to in progress
                 candidate.setMedicalStatus(MedicalStatus.PENDING);
                 break;
-
             case MEDICAL_PASSED:
                 // Set medical status to passed
                 candidate.setMedicalStatus(MedicalStatus.PASSED);
                 break;
-
             case OFFER_ISSUED:
                 // Medical Rule: Cannot issue offer unless medical status is PASSED
                 if (candidate.getMedicalStatus() != MedicalStatus.PASSED) {
                     throw new WorkflowException("Cannot issue offer: Medical status must be PASSED");
                 }
                 break;
-
+            case VISA_PROCESSING:
+                // CRITICAL PHASE 2B RULE: Downpayment required before visa processing
+                validateDownpaymentPaid(candidate);
+                break;
             case PLACED:
                 // Fulfillment Rule: Check active assignment
                 validateActiveAssignment(candidate);
+                // CRITICAL PHASE 2B RULE: Full commission payment required before placement
+                validateFullPaymentComplete(candidate);
                 break;
-
             default:
                 break;
+        }
+    }
+
+    /**
+     * Phase 2B: Validate downpayment is complete
+     * BLOCKS VISA_PROCESSING transition
+     */
+    private void validateDownpaymentPaid(Candidate candidate) {
+        // Get active assignment
+        var activeAssignment = assignmentService.getActiveAssignment(candidate.getId());
+        if (activeAssignment == null) {
+            throw new WorkflowException("Cannot process visa: No active assignment found");
+        }
+
+        // Check downpayment status
+        boolean downpaymentComplete = commissionPaymentService.isDownpaymentComplete(activeAssignment.getId());
+        if (!downpaymentComplete) {
+            throw new WorkflowException("Downpayment required before visa processing. Please complete the required downpayment through the commission agreement.");
+        }
+    }
+
+    /**
+     * Phase 2B: Validate full commission payment is complete
+     * BLOCKS PLACED transition
+     */
+    private void validateFullPaymentComplete(Candidate candidate) {
+        // Get active assignment
+        var activeAssignment = assignmentService.getActiveAssignment(candidate.getId());
+        if (activeAssignment == null) {
+            throw new WorkflowException("Cannot place candidate: No active assignment found");
+        }
+
+        // Check full payment status
+        boolean fullPaymentComplete = commissionPaymentService.isFullPaymentComplete(activeAssignment.getId());
+        if (!fullPaymentComplete) {
+            throw new WorkflowException("Full commission payment required before placement. Outstanding balance must be paid.");
         }
     }
 
@@ -203,7 +318,8 @@ public class CandidateWorkflowService {
         // Check for essential documents
         DocumentType[] requiredDocs = {
             DocumentType.PASSPORT,
-            DocumentType.CV
+            DocumentType.CV,
+            DocumentType.EDUCATIONAL_CERTIFICATE
         };
 
         for (DocumentType docType : requiredDocs) {

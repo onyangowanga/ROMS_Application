@@ -3,6 +3,7 @@ package com.roms.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.roms.entity.base.BaseAuditEntity;
 import com.roms.enums.PaymentType;
+import com.roms.enums.TransactionType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -10,6 +11,7 @@ import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "payments",
@@ -35,6 +37,16 @@ public class Payment extends BaseAuditEntity {
     @JsonIgnoreProperties({"payments", "documents", "assignments", "hibernateLazyInitializer", "handler"})
     private Candidate candidate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignment_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "candidate", "jobOrder"})
+    private Assignment assignment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agreement_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "candidate", "assignment"})
+    private AgencyCommissionAgreement agreement;
+
     @NotNull
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -42,6 +54,10 @@ public class Payment extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_type", nullable = false, length = 50)
+    private TransactionType transactionType;
 
     @Column(name = "transaction_ref", unique = true, length = 100)
     private String transactionRef;
@@ -77,9 +93,6 @@ public class Payment extends BaseAuditEntity {
     @PrePersist
     protected void onCreate() {
         super.onCreate();
-        if (paymentDate == null) {
-            paymentDate = LocalDateTime.now();
-        }
         if (transactionRef == null) {
             transactionRef = "PAY" + System.currentTimeMillis();
         }

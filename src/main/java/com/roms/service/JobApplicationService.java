@@ -89,7 +89,7 @@ public class JobApplicationService {
                 .phoneNumber(request.getPhoneNumber())
                 .address(request.getCurrentAddress())
                 .country(request.getCountry())
-                .currentStatus(CandidateStatus.APPLIED)
+                .currentStatus(CandidateStatus.APPLICATION_SUBMITTED)
                 .medicalStatus(MedicalStatus.PENDING)
                 .expectedPosition(request.getExpectedPosition())
                 .build();
@@ -112,21 +112,21 @@ public class JobApplicationService {
         boolean hasPassport = documentRepository
             .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.PASSPORT)
             .isPresent();
-        
-        boolean hasPhoto = documentRepository
-            .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.PASSPORT)
+
+        boolean hasAcademicDoc = documentRepository
+            .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.EDUCATIONAL_CERTIFICATE)
             .isPresent();
-        
+
         boolean hasCV = documentRepository
             .findByCandidateIdAndDocType(candidate.getId(), com.roms.enums.DocumentType.CV)
             .isPresent();
 
-        // If all required documents are present, set to DOCUMENTS_UNDER_REVIEW
-        if (hasPassport && hasPhoto && hasCV) {
-            return CandidateStatus.DOCUMENTS_UNDER_REVIEW;
+        // If all required documents are present, set to UNDER_REVIEW
+        if (hasPassport && hasAcademicDoc && hasCV) {
+            return CandidateStatus.UNDER_REVIEW;
         }
 
-        // Otherwise, set to DOCUMENTS_PENDING
-        return CandidateStatus.DOCUMENTS_PENDING;
+        // Otherwise, set to APPLICATION_SUBMITTED
+        return CandidateStatus.APPLICATION_SUBMITTED;
     }
 }

@@ -2,37 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
+import CommissionManagement from '../components/CommissionManagement';
+import WorkflowLockBanner from '../components/WorkflowLockBanner';
 import { candidateApi } from '../api/candidates';
 import { jobsApi } from '../api/jobs';
 import { assignmentsApi } from '../api/assignments';
 import { Candidate, CandidateDocument, CandidateStatus, DocumentType, Assignment, JobOrder } from '../types';
 import { useAuth } from '../context/AuthContext';
 
-const WORKFLOW_TRANSITIONS: Record<CandidateStatus, CandidateStatus[]> = {
-  APPLIED: ['DOCUMENTS_PENDING', 'DOCUMENTS_UNDER_REVIEW', 'REJECTED', 'WITHDRAWN'],
-  DOCUMENTS_PENDING: ['DOCUMENTS_UNDER_REVIEW', 'REJECTED', 'WITHDRAWN'],
-  DOCUMENTS_UNDER_REVIEW: ['DOCUMENTS_APPROVED', 'DOCUMENTS_PENDING', 'REJECTED', 'WITHDRAWN'],
-  DOCUMENTS_APPROVED: ['INTERVIEW_SCHEDULED', 'MEDICAL_IN_PROGRESS', 'REJECTED', 'WITHDRAWN'],
-  INTERVIEW_SCHEDULED: ['INTERVIEW_COMPLETED', 'REJECTED', 'WITHDRAWN'],
-  INTERVIEW_COMPLETED: ['MEDICAL_IN_PROGRESS', 'REJECTED', 'WITHDRAWN'],
-  MEDICAL_IN_PROGRESS: ['MEDICAL_PASSED', 'REJECTED', 'WITHDRAWN'],
-  MEDICAL_PASSED: ['OFFER_ISSUED', 'REJECTED', 'WITHDRAWN'],
-  OFFER_ISSUED: ['OFFER_SIGNED', 'REJECTED', 'WITHDRAWN'],
-  OFFER_SIGNED: ['DEPLOYED', 'WITHDRAWN'],
-  DEPLOYED: ['PLACED', 'WITHDRAWN'],
-  PLACED: [],
-  REJECTED: [],
-  WITHDRAWN: [],
-};
-
-const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'MEDICAL', 'OFFER', 'CONTRACT', 'VISA', 'OTHER'];
+const DOCUMENT_TYPES: DocumentType[] = ['PASSPORT', 'CV', 'EDUCATIONAL_CERTIFICATE', 'POLICE_CLEARANCE', 'MEDICAL_REPORT', 'PHOTO', 'OFFER_LETTER', 'CONTRACT', 'VISA', 'OTHER'];
 
 export const CandidateProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [availableTransitions, setAvailableTransitions] = useState<CandidateStatus[]>([]);
   const [documents, setDocuments] = useState<CandidateDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,14 +51,33 @@ export const CandidateProfilePage: React.FC = () => {
   const [assigning, setAssigning] = useState(false);
   const [assignmentError, setAssignmentError] = useState('');
 
+
   useEffect(() => {
     if (id) {
       loadCandidate(parseInt(id));
       loadDocuments(parseInt(id));
       loadAssignments(parseInt(id));
       loadOpenJobs();
+      loadAllowedTransitions(parseInt(id));
     }
   }, [id]);
+
+  // Refetch allowed transitions when candidate status changes
+  useEffect(() => {
+    if (id && candidate) {
+      loadAllowedTransitions(parseInt(id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate?.currentStatus]);
+
+  const loadAllowedTransitions = async (candidateId: number) => {
+    try {
+      const transitions = await candidateApi.getAllowedTransitions(candidateId);
+      setAvailableTransitions(transitions);
+    } catch (err) {
+      setAvailableTransitions([]);
+    }
+  };
 
   useEffect(() => {
     // Populate interview fields when candidate data loads
@@ -297,7 +302,7 @@ export const CandidateProfilePage: React.FC = () => {
     );
   }
 
-  const availableTransitions = WORKFLOW_TRANSITIONS[candidate.currentStatus] || [];
+
 
   return (
     <Layout>
@@ -685,8 +690,16 @@ export const CandidateProfilePage: React.FC = () => {
           </div>
 
           {/* Right Column - Workflow */}
-          <div>
-            <div className="bg-white shadow rounded-lg p-6 sticky top-6">
+          <div className="space-y-6">
+            {/* Phase 2B: Payment Workflow Locks */}
+            {assignments.filter(a => a.isActive).length > 0 && (
+              <WorkflowLockBanner
+                assignmentId={assignments.find(a => a.isActive)!.id}
+                currentStatus={candidate.currentStatus}
+              />
+            )}
+
+            <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Workflow Transitions</h2>
               
               <div className="mb-4">
@@ -698,6 +711,56 @@ export const CandidateProfilePage: React.FC = () => {
                 <div className="mb-4 rounded-md bg-red-50 p-3">
                   <p className="text-sm text-red-800 font-medium">Guard Logic Error:</p>
                   <p className="text-xs text-red-700 mt-1">{transitionError}</p>
+                </div>
+              )}
+
+              {/* Document Review Actions */}
+              {candidate.currentStatus === 'UNDER_REVIEW' && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">Document Review</h3>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Click below to automatically evaluate documents and transition status
+                  </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await candidateApi.reviewDocuments(parseInt(id!));
+                        await loadCandidate(parseInt(id!));
+                        await loadAllowedTransitions(parseInt(id!));
+                        alert('Documents reviewed successfully!');
+                      } catch (err: any) {
+                        alert(err.response?.data?.message || 'Failed to review documents');
+                      }
+                    }}
+                    className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Review Documents Now
+                  </button>
+                </div>
+              )}
+
+              {/* Proceed After Document Approval */}
+              {candidate.currentStatus === 'DOCUMENTS_APPROVED' && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="text-sm font-medium text-green-900 mb-2">Documents Approved</h3>
+                  <p className="text-xs text-green-700 mb-3">
+                    Proceed to next stage (Interview or Medical based on job requirements)
+                  </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await candidateApi.proceedAfterDocuments(parseInt(id!));
+                        await loadCandidate(parseInt(id!));
+                        await loadAllowedTransitions(parseInt(id!));
+                        alert('Proceeding to next stage!');
+                      } catch (err: any) {
+                        alert(err.response?.data?.message || 'Failed to proceed');
+                      }
+                    }}
+                    className="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Proceed to Next Stage
+                  </button>
                 </div>
               )}
 
@@ -735,14 +798,27 @@ export const CandidateProfilePage: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Workflow Notes</h3>
                 <ul className="text-xs text-gray-600 space-y-1">
                   <li>• Medical clearance required before offer issuance</li>
-                  <li>• Interview step is optional</li>
+                  <li>• <strong>Downpayment required before visa processing</strong></li>
+                  <li>• <strong>Full payment required before placement</strong></li>
                   <li>• Guard logic enforced by backend</li>
                 </ul>
               </div>
             </div>
+
+            {/* Phase 2B: Commission Management (Staff Only) */}
+            {(user?.role === 'SUPER_ADMIN' || user?.role === 'OPERATIONS_STAFF') && 
+             assignments.filter(a => a.isActive).length > 0 && (
+              <CommissionManagement
+                candidateId={candidate.id}
+                assignmentId={assignments.find(a => a.isActive)!.id}
+                onUpdate={() => loadCandidate(parseInt(id!))}
+              />
+            )}
           </div>
         </div>
       </div>
     </Layout>
   );
 };
+
+export default CandidateProfilePage;

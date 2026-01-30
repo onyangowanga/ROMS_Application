@@ -92,6 +92,10 @@ public class JobOrder extends BaseAuditEntity {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "requires_interview")
+    @Builder.Default
+    private Boolean requiresInterview = true;
+
     // Assignments relationship (replaces direct candidates collection)
     @OneToMany(mappedBy = "jobOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("jobOrder")

@@ -1,7 +1,12 @@
+import { CandidateWorkflowDTO } from '../types/workflow';
 import api from './axios';
 import { ApiResponse, Candidate, CandidateDocument, CandidateStatus } from '../types';
 
 export const candidateApi = {
+  getApplicantWorkflow: async (email: string): Promise<CandidateWorkflowDTO> => {
+    const response = await api.get<CandidateWorkflowDTO>(`/api/applicant/workflow`, { params: { email } });
+    return response.data;
+  },
   getAll: async (): Promise<Candidate[]> => {
     const response = await api.get<ApiResponse<Candidate[]>>('/api/candidates');
     return response.data.data || [];
@@ -96,5 +101,25 @@ export const candidateApi = {
   }): Promise<Candidate> => {
     const response = await api.post<ApiResponse<Candidate>>('/api/candidates/apply', applicationData);
     return response.data.data || response.data;
+  },
+
+  getAllowedTransitions: async (id: number): Promise<CandidateStatus[]> => {
+    const response = await api.get<ApiResponse<CandidateStatus[]>>(`/api/candidates/${id}/allowed-transitions`);
+    return response.data.data || [];
+  },
+
+  reviewDocuments: async (id: number): Promise<Candidate> => {
+    const response = await api.post<ApiResponse<Candidate>>(`/api/candidates/${id}/review-documents`);
+    return response.data.data;
+  },
+
+  proceedAfterDocuments: async (id: number): Promise<Candidate> => {
+    const response = await api.post<ApiResponse<Candidate>>(`/api/candidates/${id}/proceed-after-documents`);
+    return response.data.data;
+  },
+
+  acceptOffer: async (id: number): Promise<Candidate> => {
+    const response = await api.post<ApiResponse<Candidate>>(`/api/candidates/${id}/accept-offer`);
+    return response.data.data;
   },
 };

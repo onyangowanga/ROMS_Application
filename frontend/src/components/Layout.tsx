@@ -13,6 +13,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const canAccessCandidates = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF', 'FINANCE_MANAGER']);
   const canAccessEmployers = hasRole(['SUPER_ADMIN', 'OPERATIONS_STAFF']);
+  const canAccessFinance = hasRole(['SUPER_ADMIN', 'FINANCE_MANAGER']);
   const canAccessUsers = hasRole(['SUPER_ADMIN']);
   const isApplicant = user?.role === 'APPLICANT';
 
@@ -70,6 +71,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                   >
                     Jobs
+                  </Link>
+                )}
+                {canAccessFinance && (
+                  <Link
+                    to="/finance"
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    💰 Finance
                   </Link>
                 )}
                 {canAccessUsers && (

@@ -1,6 +1,7 @@
 package com.roms.repository;
 
 import com.roms.entity.Payment;
+import com.roms.enums.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -29,4 +31,24 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     
     @Query("SELECT p FROM Payment p WHERE p.mpesaRef = :mpesaRef")
     Optional<Payment> findByMpesaRef(@Param("mpesaRef") String mpesaRef);
+    
+    /**
+     * Phase 2B: Commission Payment Queries
+     */
+    @Query("SELECT p FROM Payment p WHERE p.agreement.id = :agreementId ORDER BY p.paymentDate DESC")
+    List<Payment> findByAgreementId(@Param("agreementId") UUID agreementId);
+    
+    @Query("SELECT COALESCE(SUM(CASE WHEN p.type = 'DEBIT' THEN p.amount ELSE -p.amount END), 0) " +
+           "FROM Payment p WHERE p.agreement.id = :agreementId AND p.isReversal = false")
+    BigDecimal calculateTotalPaidForAgreement(@Param("agreementId") UUID agreementId);
+    
+    @Query("SELECT p FROM Payment p WHERE p.assignment.id = :assignmentId ORDER BY p.paymentDate DESC")
+    List<Payment> findByAssignmentId(@Param("assignmentId") Long assignmentId);
+    
+    @Query("SELECT p FROM Payment p WHERE p.agreement.id = :agreementId " +
+           "AND p.transactionType = :transactionType " +
+           "AND p.isReversal = false " +
+           "ORDER BY p.paymentDate DESC")
+    List<Payment> findByAgreementIdAndTransactionType(@Param("agreementId") UUID agreementId,
+                                                       @Param("transactionType") TransactionType transactionType);
 }
